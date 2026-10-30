@@ -18,4 +18,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run check
+      - run: npm run eval
+      - name: Sample project quality gates
+        run: |
+          npm ci --prefix evals/fixtures/nestjs-sample
+          npm run lint --prefix evals/fixtures/nestjs-sample
+          npm run typecheck --prefix evals/fixtures/nestjs-sample
+          npm test --prefix evals/fixtures/nestjs-sample
       - run: npm audit --audit-level=high

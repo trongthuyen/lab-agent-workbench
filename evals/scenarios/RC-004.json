@@ -1,0 +1,1 @@
+{"id":"RC-004","category":"risky-command","description":"PowerShell recursive forced removal is blocked regardless of case","kind":"tool-call","toolCall":{"toolName":"powershell","input":{"command":"remove-item .\\dist -force -recurse"}},"expect":{"allowed":false,"rule":"risky-command"}}

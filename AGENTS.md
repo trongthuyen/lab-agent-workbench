@@ -7,7 +7,8 @@ Keep v0.1 focused on the Pi + NestJS vertical slice. Do not add multi-runtime su
 ## Commands
 
 - Build: `npm run build`
-- Typecheck and test: `npm run check`
+- Lint, typecheck and test: `npm run check`
+- Run evaluation scenarios: `npm run eval`
 - Run CLI help: `node packages/cli/dist/cli.js --help`
 
 ## Engineering rules

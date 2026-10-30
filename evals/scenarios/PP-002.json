@@ -1,0 +1,1 @@
+{"id":"PP-002","category":"protected-path","description":"Editing an .env.* variant is blocked","kind":"tool-call","toolCall":{"toolName":"edit","input":{"path":".env.production"}},"expect":{"allowed":false,"rule":"protected-path"}}

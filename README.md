@@ -10,6 +10,7 @@ Project documentation:
 - [Tổng quan tiếng Việt](./PROJECT_OVERVIEW_vn.md)
 - [Configuration contract](./docs/architecture/configuration.md)
 - [Initial threat model](./docs/architecture/threat-model.md)
+- [Evaluation scenarios](./evals/README.md)
 
 ## Requirements
 
@@ -21,8 +22,9 @@ Project documentation:
 
 ```bash
 npm install
-npm run check
+npm run check   # lint, typecheck, tests
 npm run build
+npm run eval    # replay evaluation scenarios: pi-default baseline vs Workbench
 node packages/cli/dist/cli.js --help
 ```
 
@@ -31,6 +33,7 @@ node packages/cli/dist/cli.js --help
 - `@lab-agent-workbench/core`: configuration, profiles, policies, and redaction.
 - `@lab-agent-workbench/lawb`: project initialization CLI.
 - `@lab-agent-workbench/pi-extension`: Pi policy and telemetry integration.
+- `@lab-agent-workbench/evals`: deterministic evaluation scenarios and runner, plus the sample NestJS fixture in `evals/fixtures/nestjs-sample`.
 
 ## Current CLI prototype
 

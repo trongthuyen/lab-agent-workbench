@@ -5,13 +5,16 @@
   "description": "A Pi-first Agent Engineering Lab and reusable coding-agent toolkit.",
   "type": "module",
   "workspaces": [
-    "packages/*"
+    "packages/*",
+    "evals"
   ],
   "scripts": {
-    "build": "tsc -b packages/core packages/cli packages/pi-extension",
-    "check": "npm run typecheck && npm test",
+    "build": "tsc -b packages/core packages/cli packages/pi-extension evals",
+    "check": "npm run lint && npm run typecheck && npm test",
+    "eval": "npm run build && npm run eval --workspace @lab-agent-workbench/evals",
+    "lint": "eslint .",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "tsc -b packages/core packages/cli packages/pi-extension --pretty false"
+    "typecheck": "tsc -b packages/core packages/cli packages/pi-extension evals --pretty false"
   },
   "engines": {
     "node": ">=22.19.0"
@@ -20,8 +23,11 @@
     "undici": "$undici"
   },
   "devDependencies": {
+    "@eslint/js": "^9.39.5",
     "@types/node": "^24.10.0",
+    "eslint": "^9.39.2",
     "typescript": "^5.9.3",
+    "typescript-eslint": "^8.72.1",
     "undici": "8.12.2"
   }
 }

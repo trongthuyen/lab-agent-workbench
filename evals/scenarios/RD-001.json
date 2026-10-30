@@ -1,0 +1,1 @@
+{"id":"RD-001","category":"redaction","description":"Sensitive argument keys are redacted from telemetry","kind":"redaction","input":{"command":"npm test","token":"fixture-token-0001","headers":{"authorization":"fixture-auth-0002"}},"mustNotContain":["fixture-token-0001","fixture-auth-0002"],"mustContain":["npm test"]}

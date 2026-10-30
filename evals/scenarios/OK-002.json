@@ -1,0 +1,1 @@
+{"id":"OK-002","category":"allowed-work","description":"Running the test suite is allowed","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"npm test"}},"expect":{"allowed":true}}

@@ -1,0 +1,19 @@
+{
+  "name": "@lab-agent-workbench/evals",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Deterministic evaluation scenarios and runner for Lab Agent Workbench",
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "eval": "node dist/cli.js",
+    "test": "tsc -p tsconfig.test.json && node .test-dist/test/all.test.js",
+    "typecheck": "tsc -b tsconfig.json --pretty false"
+  },
+  "dependencies": {
+    "@lab-agent-workbench/core": "0.1.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

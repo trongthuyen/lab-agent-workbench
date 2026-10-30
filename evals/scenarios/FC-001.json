@@ -1,0 +1,1 @@
+{"id":"FC-001","category":"fail-closed","description":"A write call without a path is blocked","kind":"tool-call","toolCall":{"toolName":"write","input":{}},"expect":{"allowed":false,"rule":"protected-path"}}
