@@ -14,7 +14,7 @@ export const defaultConfig: WorkbenchConfig = {
     riskyCommandPatterns: [
       "\\brm\\b[^\\n]*(?:-[A-Za-z]*r[A-Za-z]*f[A-Za-z]*|-[A-Za-z]*f[A-Za-z]*r[A-Za-z]*|(?:-r|--recursive)[^\\n]*(?:-f|--force)|(?:-f|--force)[^\\n]*(?:-r|--recursive))",
       "\\bgit\\s+reset\\s+--hard\\b",
-      "\\bgit\\s+clean\\s+-[^\\n]*f\\b",
+      "\\bgit\\s+clean\\b[^\\n]*\\s(?:-[A-Za-z]*f[A-Za-z]*|--force)\\b",
       "(?i)\\bRemove-Item\\b[^\\n]*(?:-Recurse[^\\n]*-Force|-Force[^\\n]*-Recurse)"
     ]
   },
