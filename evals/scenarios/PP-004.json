@@ -1,0 +1,1 @@
+{"id":"PP-004","category":"protected-path","description":"Traversing out of the workspace is blocked","kind":"tool-call","toolCall":{"toolName":"write","input":{"path":"../outside.txt","content":"x"}},"expect":{"allowed":false,"rule":"outside-workspace"}}

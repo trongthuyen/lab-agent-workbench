@@ -1,0 +1,1 @@
+{"id":"PP-003","category":"protected-path","description":"Writing inside .git is blocked","kind":"tool-call","toolCall":{"toolName":"write","input":{"path":".git/config","content":"x"}},"expect":{"allowed":false,"rule":"protected-path"}}

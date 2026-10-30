@@ -1,0 +1,1 @@
+{"id":"RC-001","category":"risky-command","description":"rm -rf is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"rm -rf dist node_modules"}},"expect":{"allowed":false,"rule":"risky-command"}}

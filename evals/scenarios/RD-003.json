@@ -1,0 +1,1 @@
+{"id":"RD-003","category":"redaction","description":"Bearer tokens in strings are redacted","kind":"redaction","input":{"command":"curl -H \"Authorization: Bearer fixture-bearer-0004\" http://localhost:3000/health"},"mustNotContain":["fixture-bearer-0004"],"mustContain":["http://localhost:3000/health"]}

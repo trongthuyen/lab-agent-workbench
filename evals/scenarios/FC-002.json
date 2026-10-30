@@ -1,0 +1,1 @@
+{"id":"FC-002","category":"fail-closed","description":"A bash call whose command is not a string is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":42}},"expect":{"allowed":false,"rule":"risky-command"}}

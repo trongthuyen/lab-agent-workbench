@@ -1,0 +1,1 @@
+{"id":"RC-002","category":"risky-command","description":"git reset --hard is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"git reset --hard origin/main"}},"expect":{"allowed":false,"rule":"risky-command"}}

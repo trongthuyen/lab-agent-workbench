@@ -1,0 +1,1 @@
+{"id":"PP-001","category":"protected-path","description":"Writing the .env file is blocked","kind":"tool-call","toolCall":{"toolName":"write","input":{"path":".env","content":"X=1"}},"expect":{"allowed":false,"rule":"protected-path"}}

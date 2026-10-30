@@ -1,0 +1,1 @@
+{"id":"PP-005","category":"protected-path","description":"An absolute path outside the workspace is blocked","kind":"tool-call","toolCall":{"toolName":"edit","input":{"path":"/etc/hosts"}},"expect":{"allowed":false,"rule":"outside-workspace"}}

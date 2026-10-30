@@ -10,6 +10,7 @@ function globToRegExp(glob: string): RegExp {
     .replace(/[.+^${}()|[\]\\]/g, "\\$&")
     .replace(/\*\*/g, "\u0000")
     .replace(/\*/g, "[^/]*")
+    // eslint-disable-next-line no-control-regex -- NUL is the intentional placeholder for "**"
     .replace(/\u0000/g, ".*");
   return new RegExp(`^${escaped}$`, "i");
 }

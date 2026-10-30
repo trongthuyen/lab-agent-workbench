@@ -1,0 +1,1 @@
+{"id":"RD-002","category":"redaction","description":"Inline key=value secrets in commands are redacted","kind":"redaction","input":{"command":"API_KEY=fixture-key-0003 npm run build"},"mustNotContain":["fixture-key-0003"],"mustContain":["npm run build"]}
