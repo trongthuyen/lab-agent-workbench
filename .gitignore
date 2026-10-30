@@ -1,0 +1,10 @@
+node_modules/
+.npm-cache/
+dist/
+.test-dist/
+coverage/
+*.tsbuildinfo
+.lawb/runs/
+evals/runs/
+.DS_Store
+Thumbs.db

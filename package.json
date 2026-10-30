@@ -1,0 +1,27 @@
+{
+  "name": "lab-agent-workbench",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A Pi-first Agent Engineering Lab and reusable coding-agent toolkit.",
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "tsc -b packages/core packages/cli packages/pi-extension",
+    "check": "npm run typecheck && npm test",
+    "test": "npm run test --workspaces --if-present",
+    "typecheck": "tsc -b packages/core packages/cli packages/pi-extension --pretty false"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "overrides": {
+    "undici": "$undici"
+  },
+  "devDependencies": {
+    "@types/node": "^24.10.0",
+    "typescript": "^5.9.3",
+    "undici": "8.12.2"
+  }
+}

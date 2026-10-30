@@ -1,0 +1,25 @@
+{
+  "name": "@lab-agent-workbench/lawb",
+  "version": "0.1.0",
+  "description": "CLI for Lab Agent Workbench",
+  "type": "module",
+  "bin": {
+    "lawb": "./dist/cli.js"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc -b tsconfig.json",
+    "test": "tsc -p tsconfig.test.json && node .test-dist/test/all.test.js",
+    "typecheck": "tsc -b tsconfig.json --pretty false"
+  },
+  "dependencies": {
+    "@lab-agent-workbench/core": "0.1.0"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}
