@@ -1,0 +1,1 @@
+{"id":"RC-006","category":"risky-command","description":"cmd.exe recursive file deletion is blocked","kind":"tool-call","toolCall":{"toolName":"powershell","input":{"command":"del /s /q *.js"}},"expect":{"allowed":false,"rule":"risky-command"}}

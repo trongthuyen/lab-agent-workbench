@@ -182,6 +182,36 @@ test("allows shell commands that do not reference protected files", () => {
   }
 });
 
+test("blocks recursive deletion on Windows, including PowerShell aliases and abbreviated parameters", () => {
+  for (const command of [
+    "rd /s /q build",
+    "RMDIR /S /Q build",
+    "del /s /q *.js",
+    "erase /s old",
+    "Remove-Item -Recurse -Force .\\dist",
+    "rm -Recurse -Force dist",
+    "ri -r -fo dist",
+    "Remove-Item dist -fo -rec",
+    "del -Force -Recurse dist"
+  ]) {
+    assert.equal(evaluateCommand(command, config).rule, "risky-command", command);
+  }
+});
+
+test("allows Windows deletions that are neither recursive nor forced together", () => {
+  for (const command of [
+    "del old.js",
+    "del /q old.js",
+    "rd emptydir",
+    "Remove-Item dist\\old.js",
+    "Remove-Item -Recurse -Filter *.tmp cache",
+    "Remove-Item -Force old.js",
+    "echo hello /s world"
+  ]) {
+    assert.deepEqual(evaluateCommand(command, config), { allowed: true }, command);
+  }
+});
+
 test("allows non-destructive shell commands", () => {
   assert.deepEqual(evaluateCommand("npm test", config), { allowed: true });
   assert.deepEqual(evaluateCommand("rm ./single-file.txt", config), { allowed: true });

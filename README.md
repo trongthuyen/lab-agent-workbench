@@ -11,6 +11,9 @@ Project documentation:
 - [Configuration contract](./docs/architecture/configuration.md)
 - [Initial threat model](./docs/architecture/threat-model.md)
 - [Evaluation scenarios](./evals/README.md)
+- [Installation](./docs/installation.md)
+- [Failure catalog](./docs/failure-catalog/README.md)
+- [EXP-001: policy replay](./docs/experiments/EXP-001-policy-replay.md)
 
 ## Requirements
 
@@ -57,6 +60,14 @@ with `-l` it applies only to the current project.
 `lawb init` also appends `**/.lawb` to the project's `.gitignore` (creating it if needed), so the
 config and telemetry stay out of version control. Pass `--no-gitignore` to skip that. Teams that want
 to share the config should skip it and ignore only `.lawb/runs/`.
+
+### Quality gates
+
+`lawb gates` runs the commands in `qualityGates.commands` (for the `nestjs` profile: `npm run lint`,
+`npm run typecheck`, `npm test`) and exits non-zero if any fail. It prints the commands before running
+them; add `--bail` to stop at the first failure. It exits non-zero when none are configured, so an
+empty config is not mistaken for a pass. The commands come from `.lawb/config.json`, so review that
+file before running gates in a repository you do not trust.
 
 ### Without `lawb init`
 

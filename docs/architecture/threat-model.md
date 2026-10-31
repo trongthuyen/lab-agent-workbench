@@ -44,6 +44,9 @@ Status: v0.1 draft
 - Telemetry redaction cannot guarantee removal of secrets in unknown encodings or formats.
 - The shared `~/.lawb/runs/telemetry.jsonl` records the working directory and redacted tool arguments of
   every uninitialized project in one place; treat it as sensitive and do not sync it.
+- `lawb gates` executes the commands in `.lawb/config.json` with the user's permissions. A config from an
+  untrusted repository can therefore run arbitrary commands, exactly as its npm scripts could; read the
+  printed commands and the config before running gates there.
 - The current implementation does not prompt for conditional approval; it only allows or blocks.
 
 ## Planned mitigations
