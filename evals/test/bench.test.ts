@@ -275,7 +275,8 @@ test("the agent directory loads only the provider and shares credentials, not se
 });
 
 test("a relative output directory still yields absolute paths for the child process", async () => {
-  const root = await mkdtemp(join(tmpdir(), "lawb-relative-"));
+  // Under the working directory, because path.relative returns an absolute path across Windows drives.
+  const root = await mkdtemp(join(process.cwd(), "lawb-relative-"));
   try {
     const source = join(root, "real");
     await mkdir(source);
