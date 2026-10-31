@@ -55,3 +55,5 @@ npx @lab-agent-workbench/lawb init --profile nestjs   # writes .lawb/config.json
 ## Security boundary
 
 The current policy extension is a guardrail, not an operating-system sandbox. See the threat model before relying on it for sensitive workloads.
+
+The current policy extension is a guardrail, not an operating-system sandbox. See the threat model before relying on it for sensitive workloads.

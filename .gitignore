@@ -8,3 +8,4 @@ coverage/
 evals/runs/
 .DS_Store
 Thumbs.db
+.draft
