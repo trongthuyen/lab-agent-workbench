@@ -43,6 +43,12 @@ export function parseScenario(value: unknown, source: string): Scenario {
     if (!expect.allowed && expect.rule === undefined) {
       return fail("a blocked expectation must name the expected rule");
     }
+    if (value.files !== undefined) {
+      const files = value.files;
+      if (!isRecord(files) || Object.values(files).some((content) => typeof content !== "string")) {
+        return fail("files must map paths to string contents");
+      }
+    }
     return value as unknown as Scenario;
   }
 

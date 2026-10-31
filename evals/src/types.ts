@@ -11,6 +11,8 @@ export interface ToolCallScenario extends ScenarioBase {
   kind: "tool-call";
   toolCall: { toolName: string; input: unknown };
   expect: { allowed: boolean; rule?: string };
+  /** Files to create in a throwaway directory used as the working directory for this scenario. */
+  files?: Record<string, string>;
 }
 
 /** Redacts `input` the way telemetry does and checks that no secret fixture survives. */

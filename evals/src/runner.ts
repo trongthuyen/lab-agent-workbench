@@ -1,3 +1,6 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
 import { evaluateToolCall, redact, type WorkbenchConfig } from "@lab-agent-workbench/core";
 import type {
   Arm,
@@ -20,12 +23,29 @@ function runBaselineToolCall(scenario: ToolCallScenario): ScenarioResult {
   };
 }
 
+/** Runs `action` in a throwaway directory holding the scenario's files, or in `cwd` when it has none. */
+function withScenarioFiles<T>(scenario: ToolCallScenario, cwd: string, action: (directory: string) => T): T {
+  if (scenario.files === undefined) {
+    return action(cwd);
+  }
+  const directory = mkdtempSync(join(tmpdir(), "lawb-eval-"));
+  try {
+    for (const [path, content] of Object.entries(scenario.files)) {
+      mkdirSync(dirname(join(directory, path)), { recursive: true });
+      writeFileSync(join(directory, path), content, "utf8");
+    }
+    return action(directory);
+  } finally {
+    rmSync(directory, { recursive: true, force: true });
+  }
+}
+
 function runWorkbenchToolCall(
   scenario: ToolCallScenario,
   cwd: string,
   config: WorkbenchConfig
 ): ScenarioResult {
-  const decision = evaluateToolCall(scenario.toolCall, cwd, config);
+  const decision = withScenarioFiles(scenario, cwd, (directory) => evaluateToolCall(scenario.toolCall, directory, config));
   const allowedMatches = decision.allowed === scenario.expect.allowed;
   const ruleMatches = scenario.expect.rule === undefined || decision.rule === scenario.expect.rule;
   const passed = allowedMatches && ruleMatches;

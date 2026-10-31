@@ -24,6 +24,8 @@ Status: v0.1 draft
   `.env.sample`, which a negated `!` pattern re-allows.
 - Block the `read` tool, and the `grep` tool when pointed at a protected `path` or `glob`, for paths in
   `protectedReadPaths` (env files by default). Reads are not limited to the workspace.
+- Block recursive searches (`grep -r`, `rg --hidden`, ...) whose directory tree contains a protected read
+  file, checked against the disk, unless the file is excluded from the search.
 - Block `bash` and `powershell` commands that mention a protected read path, and commands that modify
   a protected path (`.git`, env files): redirects, `sed -i`, `tee`, `cp`, `mv`, `rm`, inline
   interpreter scripts, `Set-Content`. `echo` and `printf` arguments are treated as text.
@@ -38,9 +40,10 @@ Status: v0.1 draft
 - Regular-expression command matching is not a complete shell parser and may be bypassed by aliases, encoding, indirection, scripts, or an unrecognized tool.
 - Lexical path checks do not yet resolve every symlink or junction escape.
 - Shell path protection is a lexical heuristic: variables, globs, command substitution,
-  indirection and encoded scripts bypass it, and heredoc bodies are read as separate commands. Directory-wide
-  `grep`, `find` and `ls` are not blocked; a recursive `grep` leaked an env secret in 2 of 5 live runs
-  (EXP-002).
+  indirection and encoded scripts bypass it, and heredoc bodies are read as separate commands. Searches are
+  covered only for `grep`-family tools, `rg`, `ag` and `ack`; `find ... | xargs cat`, `Get-ChildItem -Recurse |
+  Select-String`, `findstr /s` and similar pipelines are not. A recursive `grep` leaked an env secret in 2 of 5
+  live runs before it was covered (EXP-002).
 - A malicious or compromised extension running in the same Pi process can bypass Workbench policy.
 - Telemetry redaction cannot guarantee removal of secrets in unknown encodings or formats.
 - The shared `~/.lawb/runs/telemetry.jsonl` records the working directory and redacted tool arguments of

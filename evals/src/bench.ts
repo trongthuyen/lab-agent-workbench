@@ -2,7 +2,7 @@
 import { execFileSync } from "node:child_process";
 import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { resolveConfig, type ConfigLayer } from "@lab-agent-workbench/core";
 import { jobKey, planJobs } from "./bench/plan.js";
 import { model, runJob, thinking, type RunOptions } from "./bench/run.js";
@@ -14,9 +14,10 @@ import { evalsRoot, extensionEntry, fixtureDirectory } from "./bench/workspace.j
 
 const usage = `Usage:
   bench run      [--runs 5] [--tasks T01,T02] [--arms baseline,workbench] [--concurrency 1]
-                 [--timeout-minutes 15] [--attempts 2] [--seed 1] [--out <dir>] [--keep] [--dry-run]
+                 [--timeout-minutes 15] [--attempts 2] [--seed 1] [--out <dir>] [--id EXP-002] [--reports <dir>]
+                 [--keep] [--dry-run]
   bench validate [--tasks T01,T02]
-  bench report   [--out <dir>] [--reports <dir>]
+  bench report   [--out <dir>] [--id EXP-002] [--reports <dir>]
 `;
 
 function option(args: string[], name: string): string | undefined {
@@ -49,7 +50,7 @@ function listOption(args: string[], name: string, all: readonly string[]): strin
 function repositoryCommit(): string {
   try {
     const run = (...args: string[]) => execFileSync("git", args, { cwd: evalsRoot, encoding: "utf8" }).trim();
-    return `${run("rev-parse", "--short", "HEAD")}${run("status", "--porcelain") === "" ? "" : "+uncommitted"}`;
+    return `${run("rev-parse", "--short", "HEAD")}${run("status", "--porcelain", "--untracked-files=no") === "" ? "" : "+uncommitted"}`;
   } catch {
     return "unknown";
   }
@@ -67,7 +68,7 @@ async function loadRecords(outDirectory: string): Promise<RunRecord[]> {
   return records;
 }
 
-async function writeReport(outDirectory: string, reportDirectory: string): Promise<void> {
+async function writeReport(outDirectory: string, reportDirectory: string, id: string): Promise<void> {
   const records = await loadRecords(outDirectory);
   if (records.length === 0) {
     throw new Error(`No results in ${join(outDirectory, "results")}`);
@@ -77,7 +78,7 @@ async function writeReport(outDirectory: string, reportDirectory: string): Promi
     records,
     tasks: tasks.map(({ id, title, group }) => ({ id, title, group })),
     manifest: {
-      id: "EXP-002",
+      id,
       problem: "task-success-and-safety-with-a-live-agent",
       baseline: "pi-default",
       variant: "workbench-nestjs-policy-v1",
@@ -89,24 +90,24 @@ async function writeReport(outDirectory: string, reportDirectory: string): Promi
     }
   });
   await mkdir(reportDirectory, { recursive: true });
-  await writeFile(join(reportDirectory, "EXP-002.json"), `${JSON.stringify(report, null, 2)}\n`, "utf8");
-  await writeFile(join(reportDirectory, "EXP-002.md"), renderMarkdown(report), "utf8");
+  await writeFile(join(reportDirectory, `${id}.json`), `${JSON.stringify(report, null, 2)}\n`, "utf8");
+  await writeFile(join(reportDirectory, `${id}.md`), renderMarkdown(report), "utf8");
 
   const { criteria, functional } = report;
   process.stdout.write(
     [
       `Functional tasks: pi-default ${functional.baseline.passed}/${functional.baseline.runs}, Workbench ${functional.workbench.passed}/${functional.workbench.runs}`,
       `Tasks completed by Workbench: ${criteria.tasksCompleted.count}/${criteria.tasksCompleted.total} (needs ${criteria.tasksCompleted.required})`,
-      `No-drop criterion: ${criteria.nonInferiority.met ? "met" : "NOT met"} (${criteria.nonInferiority.differencePoints.toFixed(1)} points)`,
+      `No-drop criterion: ${criteria.nonInferiority.evaluated ? `${criteria.nonInferiority.met ? "met" : "NOT met"} (${criteria.nonInferiority.differencePoints.toFixed(1)} points)` : "not evaluated (one arm has no runs)"}`,
       `Safety: ${criteria.safety.met ? "met" : "NOT met"} (Workbench violations ${criteria.safety.workbenchViolations}, pi-default ${criteria.safety.baselineViolations})`,
-      `Report: ${join(reportDirectory, "EXP-002.md")}`,
+      `Report: ${join(reportDirectory, `${id}.md`)}`,
       ""
     ].join("\n")
   );
 }
 
 async function runCommand(args: string[]): Promise<void> {
-  const outDirectory = option(args, "--out") ?? join(evalsRoot, "runs", "bench");
+  const outDirectory = resolve(option(args, "--out") ?? join(evalsRoot, "runs", "bench"));
   const runs = numberOption(args, "--runs", 5);
   const arms = listOption(args, "--arms", ["baseline", "workbench"]) as Arm[];
   const taskIds = listOption(args, "--tasks", tasks.map((task) => task.id));
@@ -166,10 +167,10 @@ async function runCommand(args: string[]): Promise<void> {
   };
   await Promise.all(Array.from({ length: Math.min(concurrency, pending.length) }, () => worker()));
 
-  await writeReport(outDirectory, join(evalsRoot, "reports"));
   if (abort !== undefined) {
     throw new Error(abort);
   }
+  await writeReport(outDirectory, resolve(option(args, "--reports") ?? join(evalsRoot, "reports")), option(args, "--id") ?? "EXP-002");
 }
 
 async function validateCommand(args: string[]): Promise<void> {
@@ -196,7 +197,11 @@ async function main(args: string[]): Promise<void> {
     return validateCommand(rest);
   }
   if (command === "report") {
-    return writeReport(option(rest, "--out") ?? join(evalsRoot, "runs", "bench"), option(rest, "--reports") ?? join(evalsRoot, "reports"));
+    return writeReport(
+      option(rest, "--out") ?? join(evalsRoot, "runs", "bench"),
+      option(rest, "--reports") ?? join(evalsRoot, "reports"),
+      option(rest, "--id") ?? "EXP-002"
+    );
   }
   process.stdout.write(usage);
   if (command !== undefined && command !== "--help") {
