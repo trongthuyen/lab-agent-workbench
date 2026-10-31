@@ -2,20 +2,43 @@
   "name": "@lab-agent-workbench/pi-extension",
   "version": "0.1.0",
   "description": "Pi integration for Lab Agent Workbench",
+  "keywords": [
+    "pi",
+    "pi-package",
+    "agent",
+    "extension"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/trongthuyen/lab-agent-workbench#readme",
+  "bugs": {
+    "url": "https://github.com/trongthuyen/lab-agent-workbench/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trongthuyen/lab-agent-workbench.git",
+    "directory": "packages/pi-extension"
+  },
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
   "pi": {
     "extensions": [
       "./dist/index.js"
     ]
   },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "build": "tsc -b tsconfig.json",
-    "typecheck": "tsc -b tsconfig.json --pretty false"
+    "typecheck": "tsc -b tsconfig.json --pretty false",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@lab-agent-workbench/core": "0.1.0"

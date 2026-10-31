@@ -42,7 +42,15 @@ lawb init --profile nestjs
 lawb config
 ```
 
-The published package scope and installation commands remain provisional until a registry scope is selected.
+## Installation
+
+Packages are published under the `@lab-agent-workbench` npm scope. Until the first release is
+published, install from a clone instead (see [Publishing](./docs/publishing.md)).
+
+```bash
+pi install npm:@lab-agent-workbench/pi-extension      # Pi extension (add -l for project scope)
+npx @lab-agent-workbench/lawb init --profile nestjs   # writes .lawb/config.json
+```
 
 ## Security boundary
 
