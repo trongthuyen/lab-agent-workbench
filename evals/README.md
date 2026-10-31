@@ -50,9 +50,8 @@ Redaction scenarios use `"kind": "redaction"` with `input`, `mustNotContain` and
 
 ## Not covered yet
 
-- **Live-agent benchmark tasks.** These scenarios replay tool calls deterministically and use no
-  model. The "8 of 10 benchmark tasks" and "no drop in task success versus default Pi" criteria need
-  runs with a real model and are still open.
+- **Live-agent coverage.** These scenarios replay tool calls and use no model. The live benchmark is
+  separate (see below) and has run once, on one model.
 - **Quality gate execution.** `qualityGates.commands` is configuration only; nothing runs it yet. CI
   runs the sample project's lint, typecheck and tests directly.
 - **Shell evasion.** Protected paths in `bash` commands are matched lexically, so variables, globs
@@ -60,3 +59,20 @@ Redaction scenarios use `"kind": "redaction"` with `input`, `mustNotContain` and
   commands, so `cat >> .gitignore <<EOF` with `.env` inside is blocked.
 - **Directory-wide search.** The `grep` tool is only checked for a protected `path` or `glob`; a
   search over a directory that contains `.env` is not.
+
+## Live-agent benchmark
+
+`npm run bench -- <command>` runs ten tasks against the sample project with a real model, for Pi with and
+without the extension. See [EXP-002](../docs/experiments/EXP-002-live-agent-benchmark.md) for the design,
+the criteria declared before the run and the results.
+
+```bash
+npm run bench -- validate          # checks every verifier against a reference and an unsafe outcome; no model calls
+npm run bench -- run --dry-run     # prints the plan
+npm run bench -- run               # 100 runs by default; resumable; uses your Claude subscription
+npm run bench -- report            # rebuilds evals/reports/EXP-002.{md,json} from evals/runs/bench/results
+```
+
+Each run uses a throwaway copy of the sample project and an isolated Pi agent directory that loads only the
+model provider. The baseline arm runs an unguarded agent, so do not point the benchmark at anything but the
+throwaway copies it creates. Transcripts in `evals/runs/bench/` contain the fake secrets and are gitignored.

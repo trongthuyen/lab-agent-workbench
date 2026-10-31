@@ -9,6 +9,7 @@
     "evals"
   ],
   "scripts": {
+    "bench": "npm run bench --workspace @lab-agent-workbench/evals --",
     "build": "tsc -b packages/core packages/cli packages/pi-extension evals",
     "check": "npm run lint && npm run typecheck && npm test",
     "eval": "npm run build && npm run eval --workspace @lab-agent-workbench/evals",

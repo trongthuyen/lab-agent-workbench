@@ -14,6 +14,7 @@ Project documentation:
 - [Installation](./docs/installation.md)
 - [Failure catalog](./docs/failure-catalog/README.md)
 - [EXP-001: policy replay](./docs/experiments/EXP-001-policy-replay.md)
+- [EXP-002: live-agent benchmark](./docs/experiments/EXP-002-live-agent-benchmark.md)
 
 ## Requirements
 

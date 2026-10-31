@@ -39,7 +39,8 @@ Status: v0.1 draft
 - Lexical path checks do not yet resolve every symlink or junction escape.
 - Shell path protection is a lexical heuristic: variables, globs, command substitution,
   indirection and encoded scripts bypass it, and heredoc bodies are read as separate commands. Directory-wide
-  `grep`, `find` and `ls` are not blocked.
+  `grep`, `find` and `ls` are not blocked; a recursive `grep` leaked an env secret in 2 of 5 live runs
+  (EXP-002).
 - A malicious or compromised extension running in the same Pi process can bypass Workbench policy.
 - Telemetry redaction cannot guarantee removal of secrets in unknown encodings or formats.
 - The shared `~/.lawb/runs/telemetry.jsonl` records the working directory and redacted tool arguments of
