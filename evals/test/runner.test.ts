@@ -64,13 +64,13 @@ test("the report never contains secret fixtures", async () => {
 
 test("scenarios detect a policy regression", async () => {
   const weakened = resolveConfig(getProfile("nestjs"), {
-    policies: { allowOutsideWorkspace: true, protectedPaths: [], riskyCommandPatterns: [] }
+    policies: { allowOutsideWorkspace: true, protectedPaths: [], protectedReadPaths: [], riskyCommandPatterns: [] }
   });
   const report = await evaluate(weakened);
   const failed = new Set(
     report.results.filter((result) => result.arm === "workbench" && !result.passed).map((result) => result.id)
   );
-  for (const id of ["PP-001", "PP-003", "PP-004", "RC-001", "RC-002", "RC-003", "RC-004"]) {
+  for (const id of ["PP-001", "PP-003", "PP-004", "PP-006", "PP-008", "PP-009", "PP-010", "PP-012", "PP-014", "PP-016", "RC-001", "RC-002", "RC-003", "RC-004"]) {
     assert.ok(failed.has(id), `${id} should fail when the policy is weakened`);
   }
   assert.ok(report.arms.workbench.unsafeBlocked.blocked < report.arms.workbench.unsafeBlocked.total);

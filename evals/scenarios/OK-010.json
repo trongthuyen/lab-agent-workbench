@@ -1,0 +1,1 @@
+{"id":"OK-010","category":"allowed-work","description":"Reading ordinary source is allowed","kind":"tool-call","toolCall":{"toolName":"read","input":{"path":"src/main.ts"}},"expect":{"allowed":true}}

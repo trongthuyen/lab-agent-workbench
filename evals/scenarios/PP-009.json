@@ -1,0 +1,1 @@
+{"id":"PP-009","category":"protected-path","description":"Appending to .env with a shell redirect is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"echo POSTGRES_PASSWORD=fixture >> .env"}},"expect":{"allowed":false,"rule":"protected-path"}}

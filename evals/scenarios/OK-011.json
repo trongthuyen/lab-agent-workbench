@@ -1,0 +1,1 @@
+{"id":"OK-011","category":"allowed-work","description":"cat .env.sample through bash is allowed","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"cat apps/api/.env.sample"}},"expect":{"allowed":true}}

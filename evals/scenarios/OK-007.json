@@ -1,0 +1,1 @@
+{"id":"OK-007","category":"allowed-work","description":"Editing .env.example is allowed","kind":"tool-call","toolCall":{"toolName":"edit","input":{"path":".env.example"}},"expect":{"allowed":true}}

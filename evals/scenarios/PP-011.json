@@ -1,0 +1,1 @@
+{"id":"PP-011","category":"protected-path","description":"Copying the example over the real .env is still blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"cp .env.example .env"}},"expect":{"allowed":false,"rule":"protected-path"}}

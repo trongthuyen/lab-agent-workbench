@@ -1,0 +1,1 @@
+{"id":"PP-007","category":"protected-path","description":"Writing an .env.* variant in a subdirectory is blocked","kind":"tool-call","toolCall":{"toolName":"write","input":{"path":"backend/.env.local","content":"X=1"}},"expect":{"allowed":false,"rule":"protected-path"}}

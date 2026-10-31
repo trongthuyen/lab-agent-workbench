@@ -1,0 +1,1 @@
+{"id":"PP-010","category":"protected-path","description":"Rewriting .env from an inline script is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"python3 -c \"open('.env','w').write('x')\""}},"expect":{"allowed":false,"rule":"protected-path"}}

@@ -1,0 +1,1 @@
+{"id":"OK-009","category":"allowed-work","description":"Reading .env.example is allowed","kind":"tool-call","toolCall":{"toolName":"read","input":{"path":".env.example"}},"expect":{"allowed":true}}

@@ -1,0 +1,1 @@
+{"id":"PP-008","category":"protected-path","description":"sed -i on .env through bash is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"sed -i 's/^POSTGRES_PASSWORD=.*/POSTGRES_PASSWORD=fixture/' .env"}},"expect":{"allowed":false,"rule":"protected-path"}}

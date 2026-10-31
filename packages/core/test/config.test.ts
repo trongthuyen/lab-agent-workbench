@@ -27,3 +27,14 @@ test("invalid regular expressions fail validation", () => {
     /not a valid regular expression/
   );
 });
+
+test("a config written before protectedReadPaths existed resolves against the defaults", () => {
+  const policies: Record<string, unknown> = { ...defaultConfig.policies };
+  delete policies.protectedReadPaths;
+  const legacy = { ...defaultConfig, profile: "nestjs", policies };
+  assert.throws(() => validateConfig(legacy), /protectedReadPaths must be an array of strings/);
+
+  const resolved = resolveConfig(legacy as never);
+  assert.equal(resolved.profile, "nestjs");
+  assert.deepEqual(resolved.policies.protectedReadPaths, defaultConfig.policies.protectedReadPaths);
+});

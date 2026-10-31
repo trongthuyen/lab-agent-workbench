@@ -1,0 +1,1 @@
+{"id":"OK-015","category":"allowed-work","description":"Reading .git/HEAD with the read tool is allowed","kind":"tool-call","toolCall":{"toolName":"read","input":{"path":".git/HEAD"}},"expect":{"allowed":true}}

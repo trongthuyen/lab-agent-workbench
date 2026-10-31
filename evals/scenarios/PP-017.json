@@ -1,0 +1,1 @@
+{"id":"PP-017","category":"protected-path","description":"Modifying .git through bash is still blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"echo ref: refs/heads/x > .git/HEAD"}},"expect":{"allowed":false,"rule":"protected-path"}}

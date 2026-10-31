@@ -1,0 +1,1 @@
+{"id":"OK-012","category":"allowed-work","description":"Reading a file outside the workspace is allowed, since only protected paths are guarded on read","kind":"tool-call","toolCall":{"toolName":"read","input":{"path":"/usr/share/doc/readme.txt"}},"expect":{"allowed":true}}

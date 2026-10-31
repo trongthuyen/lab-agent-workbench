@@ -19,7 +19,14 @@ Status: v0.1 draft
 ## Covered in the first vertical slice
 
 - Block writes and edits outside the configured workspace.
-- Block writes and edits to configured protected paths.
+- Block writes and edits to configured protected paths. `**/` matches zero or more directories, so
+  the default `**/.env` and `**/.env.*` protect env files at any depth, except `.env.example` and
+  `.env.sample`, which a negated `!` pattern re-allows.
+- Block the `read` tool, and the `grep` tool when pointed at a protected `path` or `glob`, for paths in
+  `protectedReadPaths` (env files by default). Reads are not limited to the workspace.
+- Block `bash` and `powershell` commands that mention a protected read path, and commands that modify
+  a protected path (`.git`, env files): redirects, `sed -i`, `tee`, `cp`, `mv`, `rm`, inline
+  interpreter scripts, `Set-Content`. `echo` and `printf` arguments are treated as text.
 - Block known destructive shell and PowerShell command patterns.
 - Fail closed when write/edit calls have no path or shell calls have no command.
 - Redact configured string patterns and sensitive object keys before telemetry is written.
@@ -30,6 +37,9 @@ Status: v0.1 draft
 - This is an in-process policy guard, not a process, container, or operating-system sandbox.
 - Regular-expression command matching is not a complete shell parser and may be bypassed by aliases, encoding, indirection, scripts, or an unrecognized tool.
 - Lexical path checks do not yet resolve every symlink or junction escape.
+- Shell path protection is a lexical heuristic: variables, globs, command substitution,
+  indirection and encoded scripts bypass it, and heredoc bodies are read as separate commands. Directory-wide
+  `grep`, `find` and `ls` are not blocked.
 - A malicious or compromised extension running in the same Pi process can bypass Workbench policy.
 - Telemetry redaction cannot guarantee removal of secrets in unknown encodings or formats.
 - The current implementation does not prompt for conditional approval; it only allows or blocks.
