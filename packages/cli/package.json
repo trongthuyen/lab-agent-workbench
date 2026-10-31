@@ -2,19 +2,40 @@
   "name": "@lab-agent-workbench/lawb",
   "version": "0.1.0",
   "description": "CLI for Lab Agent Workbench",
+  "keywords": [
+    "agent",
+    "cli"
+  ],
+  "license": "MIT",
+  "homepage": "https://github.com/trongthuyen/lab-agent-workbench#readme",
+  "bugs": {
+    "url": "https://github.com/trongthuyen/lab-agent-workbench/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/trongthuyen/lab-agent-workbench.git",
+    "directory": "packages/cli"
+  },
   "type": "module",
   "bin": {
-    "lawb": "./dist/cli.js"
+    "lawb": "dist/cli.js"
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE"
   ],
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org/"
+  },
   "scripts": {
     "build": "tsc -b tsconfig.json",
     "test": "tsc -p tsconfig.test.json && node .test-dist/test/all.test.js",
-    "typecheck": "tsc -b tsconfig.json --pretty false"
+    "typecheck": "tsc -b tsconfig.json --pretty false",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@lab-agent-workbench/core": "0.1.0"
