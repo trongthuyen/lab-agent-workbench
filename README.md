@@ -52,6 +52,18 @@ pi install npm:@lab-agent-workbench/pi-extension      # Pi extension (add -l for
 npx @lab-agent-workbench/lawb init --profile nestjs   # writes .lawb/config.json
 ```
 
+`lawb init` also appends `**/.lawb` to the project's `.gitignore` (creating it if needed), so the
+config and telemetry stay out of version control. Pass `--no-gitignore` to skip that. Teams that want
+to share the config should skip it and ignore only `.lawb/runs/`.
+
+### Without `lawb init`
+
+A project with no `.lawb/config.json` runs on the built-in defaults, and nothing is created inside
+it. Telemetry for such projects goes to one shared log in your home directory,
+`~/.lawb/runs/telemetry.jsonl` (`%USERPROFILE%\.lawb\runs\telemetry.jsonl` on Windows); each record
+carries the `cwd` it came from. Run `lawb init` in a project to give it its own profile and its own
+`.lawb/runs/telemetry.jsonl`.
+
 ## Security boundary
 
 The current policy extension is a guardrail, not an operating-system sandbox. See the threat model before relying on it for sensitive workloads.

@@ -30,7 +30,7 @@ Status: v0.1 draft
 - Block known destructive shell and PowerShell command patterns.
 - Fail closed when write/edit calls have no path or shell calls have no command.
 - Redact configured string patterns and sensitive object keys before telemetry is written.
-- Keep telemetry output inside the workspace.
+- Keep project telemetry inside the workspace; uninitialized projects log only to `~/.lawb/runs/`.
 
 ## Known limitations
 
@@ -42,6 +42,8 @@ Status: v0.1 draft
   `grep`, `find` and `ls` are not blocked.
 - A malicious or compromised extension running in the same Pi process can bypass Workbench policy.
 - Telemetry redaction cannot guarantee removal of secrets in unknown encodings or formats.
+- The shared `~/.lawb/runs/telemetry.jsonl` records the working directory and redacted tool arguments of
+  every uninitialized project in one place; treat it as sensitive and do not sync it.
 - The current implementation does not prompt for conditional approval; it only allows or blocks.
 
 ## Planned mitigations

@@ -9,7 +9,15 @@ permissions:
 
 jobs:
   check:
-    runs-on: ubuntu-latest
+    name: check (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        shell: bash
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -25,4 +33,6 @@ jobs:
           npm run lint --prefix evals/fixtures/nestjs-sample
           npm run typecheck --prefix evals/fixtures/nestjs-sample
           npm test --prefix evals/fixtures/nestjs-sample
-      - run: npm audit --audit-level=high
+      - name: Audit
+        if: runner.os == 'Linux'
+        run: npm audit --audit-level=high

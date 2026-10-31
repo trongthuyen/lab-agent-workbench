@@ -13,7 +13,8 @@ gitignored; commit aggregate results to `evals/reports/` only.
 ## What is evaluated
 
 The runner loads `evals/fixtures/nestjs-sample/.lawb/config.json` (written by
-`lawb init --profile nestjs`) and replays each scenario against it, so the sample project is
+`lawb init --profile nestjs --no-gitignore`; the fixture commits its config, so it opts out of the
+`**/.lawb` ignore entry) and replays each scenario against it, so the sample project is
 exercised exactly as a user would configure it.
 
 | Prefix | Category | Question |

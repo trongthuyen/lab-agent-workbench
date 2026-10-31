@@ -37,8 +37,9 @@
   },
   "scripts": {
     "build": "tsc -b tsconfig.json",
-    "typecheck": "tsc -b tsconfig.json --pretty false",
-    "prepublishOnly": "npm run build"
+    "prepublishOnly": "npm run build",
+    "test": "tsc -p tsconfig.test.json && node .test-dist/test/all.test.js",
+    "typecheck": "tsc -b tsconfig.json --pretty false"
   },
   "dependencies": {
     "@lab-agent-workbench/core": "0.1.0"
