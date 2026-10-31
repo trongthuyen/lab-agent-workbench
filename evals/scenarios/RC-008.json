@@ -1,0 +1,1 @@
+{"id":"RC-008","category":"risky-command","description":"PowerShell abbreviated parameters -rec -fo are blocked","kind":"tool-call","toolCall":{"toolName":"powershell","input":{"command":"Remove-Item dist -fo -rec"}},"expect":{"allowed":false,"rule":"risky-command"}}

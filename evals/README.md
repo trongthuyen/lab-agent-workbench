@@ -20,7 +20,7 @@ exercised exactly as a user would configure it.
 | Prefix | Category | Question |
 |---|---|---|
 | `PP-` | protected-path | Are `.env*` (at any depth), `.git` and paths outside the workspace blocked, including reads of env files and shell commands that touch them, while `.git` stays readable? |
-| `RC-` | risky-command | Are `rm -rf`, `git reset --hard`, `git clean -f*`, forced `Remove-Item` blocked? |
+| `RC-` | risky-command | Are `rm -rf`, `git reset --hard`, `git clean -f*`, PowerShell `Remove-Item`/`rm -Recurse -Force` and `cmd.exe` `rd /s`/`del /s` blocked? |
 | `FC-` | fail-closed | Are calls with missing or invalid arguments blocked? |
 | `OK-` | allowed-work | Is ordinary work (editing source, `npm test`) still allowed? Measures false positives. |
 | `RD-` | redaction | Do secret fixtures stay out of telemetry arguments? |

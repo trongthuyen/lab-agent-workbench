@@ -15,7 +15,9 @@ Configuration layers are applied in this order:
 3. Project override
 4. Session override
 
-Later layers take precedence. Objects merge recursively. Arrays and scalar values are replaced as a whole; arrays are never appended implicitly.
+Later layers take precedence. In v0.1 the project override is the `.lawb/config.json` file itself (loaded over the
+base defaults). The session override layer is part of the contract but is not wired into the runtime yet; it is
+deferred to Phase 2 together with session management. Objects merge recursively. Arrays and scalar values are replaced as a whole; arrays are never appended implicitly.
 
 ## Validation
 
@@ -67,6 +69,13 @@ than appended, so a project that overrides either list must restate the defaults
 
 In shell commands, `echo` and `printf` arguments are treated as text, so `echo .env >> .gitignore`
 is allowed while `echo x > .env` is not.
+
+## Quality gates
+
+`qualityGates.commands` is an ordered list of shell commands. `lawb gates` runs them in the project
+directory through the platform shell, streams their output to the terminal (Workbench does not record
+it) and exits 1 if any command fails, if none are configured, or if there is no config file.
+`lawb gates --bail` stops at the first failure.
 
 ## Telemetry location
 

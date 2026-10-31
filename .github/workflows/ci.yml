@@ -30,9 +30,8 @@ jobs:
       - name: Sample project quality gates
         run: |
           npm ci --prefix evals/fixtures/nestjs-sample
-          npm run lint --prefix evals/fixtures/nestjs-sample
-          npm run typecheck --prefix evals/fixtures/nestjs-sample
-          npm test --prefix evals/fixtures/nestjs-sample
+          cd evals/fixtures/nestjs-sample
+          node ../../../packages/cli/dist/cli.js gates
       - name: Audit
         if: runner.os == 'Linux'
         run: npm audit --audit-level=high

@@ -1,0 +1,1 @@
+{"id":"RC-007","category":"risky-command","description":"PowerShell rm alias with -Recurse -Force is blocked","kind":"tool-call","toolCall":{"toolName":"powershell","input":{"command":"rm -Recurse -Force dist"}},"expect":{"allowed":false,"rule":"risky-command"}}

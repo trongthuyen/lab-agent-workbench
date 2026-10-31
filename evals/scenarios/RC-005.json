@@ -1,0 +1,1 @@
+{"id":"RC-005","category":"risky-command","description":"cmd.exe recursive directory removal is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"rd /s /q dist"}},"expect":{"allowed":false,"rule":"risky-command"}}
