@@ -3,7 +3,7 @@
 Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workbench/pi-extension` and
 `@lab-agent-workbench/lawb` always share a version, because the other two pin `core` exactly.
 
-## 0.1.1 (unreleased)
+## 0.1.1 (2026-10-31)
 
 ### Added
 - `lawb gates` runs the commands in `qualityGates.commands`, prints them first, and exits non-zero on a
