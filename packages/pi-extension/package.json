@@ -1,6 +1,6 @@
 {
   "name": "@lab-agent-workbench/pi-extension",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Pi integration for Lab Agent Workbench",
   "keywords": [
     "pi",
@@ -42,7 +42,7 @@
     "typecheck": "tsc -b tsconfig.json --pretty false"
   },
   "dependencies": {
-    "@lab-agent-workbench/core": "0.1.0"
+    "@lab-agent-workbench/core": "0.1.1"
   },
   "peerDependencies": {
     "@earendil-works/pi-coding-agent": "*"
