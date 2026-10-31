@@ -40,6 +40,21 @@ for an uninitialized project) gains one JSON line per call.
 
 `npx @lab-agent-workbench/lawb gates` runs the project's quality gates.
 
+## Setup time
+
+The v0.1 target is to initialize the sample NestJS project in under two minutes. Measured on 2026-10-31
+(Linux on WSL2, Node 24.22.1, npm 11.19.1, home broadband), starting from an empty npm cache and an empty
+Pi agent directory, with the published 0.1.0 packages:
+
+| Step | Time |
+|---|---|
+| `npx @lab-agent-workbench/lawb init --profile nestjs` | 3.1 s |
+| `pi install npm:@lab-agent-workbench/pi-extension` | 1.9 s |
+| Total | about 5 s |
+
+This excludes installing Node, Pi and the project's own dependencies, and it depends on network speed.
+It was a single run on one machine, so read it as "seconds, not minutes", not as a benchmark.
+
 ## Upgrade and uninstall
 
 ```bash
