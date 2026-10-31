@@ -1,0 +1,1 @@
+{"id":"OK-018","category":"allowed-work","description":"A recursive grep that excludes env files is allowed","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"grep -rniE \"postgres|DATABASE_URL\" --exclude=\".env*\" --exclude-dir=node_modules ."}},"expect":{"allowed":true},"files":{".env":"POSTGRES_PASSWORD=fixture-only","src/a.ts":"export {};"}}

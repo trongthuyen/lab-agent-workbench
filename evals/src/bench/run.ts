@@ -1,5 +1,5 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import type { WorkbenchConfig } from "@lab-agent-workbench/core";
 import { parseTrace, spawnCollect, type SpawnResult } from "./pi.js";
 import { computeSignals } from "./signals.js";
@@ -69,7 +69,7 @@ export interface AttemptResult {
 
 export async function runAttempt(job: Job, attempt: number, options: RunOptions): Promise<AttemptResult> {
   const task = taskById(job.task);
-  const root = join(options.outDirectory, "work", `${jobKey(job)}-a${attempt}`);
+  const root = resolve(options.outDirectory, "work", `${jobKey(job)}-a${attempt}`);
   const prepared = await prepareWorkspace(root, task);
   const agentDirectory = await prepareAgentDirectory(root);
 
