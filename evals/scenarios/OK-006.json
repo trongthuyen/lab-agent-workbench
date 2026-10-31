@@ -1,0 +1,1 @@
+{"id":"OK-006","category":"allowed-work","description":"Redirecting test output to a log file is allowed","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"npm test > build.log 2>&1"}},"expect":{"allowed":true}}

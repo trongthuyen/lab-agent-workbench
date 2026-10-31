@@ -8,8 +8,20 @@ export const defaultConfig: WorkbenchConfig = {
     protectedPaths: [
       ".git",
       ".git/**",
-      ".env",
-      ".env.*"
+      "**/.env",
+      "**/.env.*",
+      "!**/.env-example",
+      "!**/.env.example",
+      "!**/.env-sample",
+      "!**/.env.sample"
+    ],
+    protectedReadPaths: [
+      "**/.env",
+      "**/.env.*",
+      "!**/.env-example",
+      "!**/.env.example",
+      "!**/.env-sample",
+      "!**/.env.sample"
     ],
     riskyCommandPatterns: [
       "\\brm\\b[^\\n]*(?:-[A-Za-z]*r[A-Za-z]*f[A-Za-z]*|-[A-Za-z]*f[A-Za-z]*r[A-Za-z]*|(?:-r|--recursive)[^\\n]*(?:-f|--force)|(?:-f|--force)[^\\n]*(?:-r|--recursive))",
@@ -33,7 +45,7 @@ export const defaultConfig: WorkbenchConfig = {
 
 const allowedKeys = {
   root: new Set(["version", "profile", "policies", "telemetry", "qualityGates"]),
-  policies: new Set(["allowOutsideWorkspace", "protectedPaths", "riskyCommandPatterns"]),
+  policies: new Set(["allowOutsideWorkspace", "protectedPaths", "protectedReadPaths", "riskyCommandPatterns"]),
   telemetry: new Set(["enabled", "path", "redactPatterns"]),
   qualityGates: new Set(["commands"])
 };
@@ -81,6 +93,7 @@ export function validateConfig(value: unknown): WorkbenchConfig {
     throw new Error("policies.allowOutsideWorkspace must be a boolean");
   }
   assertStringArray(value.policies.protectedPaths, "policies.protectedPaths");
+  assertStringArray(value.policies.protectedReadPaths, "policies.protectedReadPaths");
   assertStringArray(value.policies.riskyCommandPatterns, "policies.riskyCommandPatterns");
 
   if (!isRecord(value.telemetry)) {

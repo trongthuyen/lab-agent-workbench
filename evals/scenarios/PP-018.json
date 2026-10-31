@@ -1,0 +1,1 @@
+{"id":"PP-018","category":"protected-path","description":"echo redirected into .env is still blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"echo POSTGRES_PASSWORD=fixture > .env"}},"expect":{"allowed":false,"rule":"protected-path"}}

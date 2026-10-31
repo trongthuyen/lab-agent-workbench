@@ -4,6 +4,7 @@ export interface WorkbenchConfig {
   policies: {
     allowOutsideWorkspace: boolean;
     protectedPaths: string[];
+    protectedReadPaths: string[];
     riskyCommandPatterns: string[];
   };
   telemetry: {

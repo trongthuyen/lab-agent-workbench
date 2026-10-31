@@ -1,0 +1,1 @@
+{"id":"OK-008","category":"allowed-work","description":"Writing a nested .env.sample is allowed","kind":"tool-call","toolCall":{"toolName":"write","input":{"path":"apps/api/.env.sample","content":"POSTGRES_PASSWORD=changeme"}},"expect":{"allowed":true}}

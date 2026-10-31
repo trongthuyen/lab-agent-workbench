@@ -1,0 +1,1 @@
+{"id":"PP-016","category":"protected-path","description":"The grep tool pointed at .env is blocked","kind":"tool-call","toolCall":{"toolName":"grep","input":{"pattern":"PASSWORD","path":".env"}},"expect":{"allowed":false,"rule":"protected-path"}}

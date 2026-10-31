@@ -1,6 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { join } from "node:path";
-import { getProfile, resolveConfig, validateConfig, type WorkbenchConfig } from "@lab-agent-workbench/core";
+import { getProfile, resolveConfig, type ConfigLayer, type WorkbenchConfig } from "@lab-agent-workbench/core";
 
 export interface InitOptions {
   cwd: string;
@@ -39,5 +39,5 @@ export async function initializeProject(options: InitOptions): Promise<InitResul
 export async function readProjectConfig(cwd: string): Promise<WorkbenchConfig> {
   const configPath = join(cwd, ".lawb", "config.json");
   const source = await readFile(configPath, "utf8");
-  return validateConfig(JSON.parse(source) as unknown);
+  return resolveConfig(JSON.parse(source) as ConfigLayer);
 }

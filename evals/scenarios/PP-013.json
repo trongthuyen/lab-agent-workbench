@@ -1,0 +1,1 @@
+{"id":"PP-013","category":"protected-path","description":"Reading a nested .env with the read tool is blocked","kind":"tool-call","toolCall":{"toolName":"read","input":{"path":"apps/api/.env"}},"expect":{"allowed":false,"rule":"protected-path"}}

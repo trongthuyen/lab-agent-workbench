@@ -18,7 +18,7 @@ exercised exactly as a user would configure it.
 
 | Prefix | Category | Question |
 |---|---|---|
-| `PP-` | protected-path | Are `.env*`, `.git` and paths outside the workspace blocked? |
+| `PP-` | protected-path | Are `.env*` (at any depth), `.git` and paths outside the workspace blocked, including reads of env files and shell commands that touch them, while `.git` stays readable? |
 | `RC-` | risky-command | Are `rm -rf`, `git reset --hard`, `git clean -f*`, forced `Remove-Item` blocked? |
 | `FC-` | fail-closed | Are calls with missing or invalid arguments blocked? |
 | `OK-` | allowed-work | Is ordinary work (editing source, `npm test`) still allowed? Measures false positives. |
@@ -54,5 +54,8 @@ Redaction scenarios use `"kind": "redaction"` with `input`, `mustNotContain` and
   runs with a real model and are still open.
 - **Quality gate execution.** `qualityGates.commands` is configuration only; nothing runs it yet. CI
   runs the sample project's lint, typecheck and tests directly.
-- **Read access.** Policy guards `write`, `edit`, `bash` and `powershell`. Reading `.env` through
-  `read` or `cat` is not blocked.
+- **Shell evasion.** Protected paths in `bash` commands are matched lexically, so variables, globs
+  (`cat .en*`), indirection or encoded scripts bypass it. Heredoc bodies are read as separate
+  commands, so `cat >> .gitignore <<EOF` with `.env` inside is blocked.
+- **Directory-wide search.** The `grep` tool is only checked for a protected `path` or `glob`; a
+  search over a directory that contains `.env` is not.

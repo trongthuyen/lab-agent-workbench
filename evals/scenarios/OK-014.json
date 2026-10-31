@@ -1,0 +1,1 @@
+{"id":"OK-014","category":"allowed-work","description":"Reading .git/config with cat is allowed","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"cat .git/config"}},"expect":{"allowed":true}}

@@ -5,7 +5,7 @@ import {
   evaluateToolCall,
   redact,
   resolveConfig,
-  validateConfig,
+  type ConfigLayer,
   type WorkbenchConfig
 } from "@lab-agent-workbench/core";
 
@@ -17,7 +17,7 @@ interface PendingCall {
 async function loadConfig(cwd: string): Promise<WorkbenchConfig> {
   try {
     const source = await readFile(resolve(cwd, ".lawb", "config.json"), "utf8");
-    return validateConfig(JSON.parse(source) as unknown);
+    return resolveConfig(JSON.parse(source) as ConfigLayer);
   } catch (error) {
     const code = error instanceof Error && "code" in error ? error.code : undefined;
     if (code === "ENOENT") {

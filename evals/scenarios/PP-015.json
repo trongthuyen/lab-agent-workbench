@@ -1,0 +1,1 @@
+{"id":"PP-015","category":"protected-path","description":"grep for a secret in .env through bash is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"grep POSTGRES_PASSWORD .env"}},"expect":{"allowed":false,"rule":"protected-path"}}

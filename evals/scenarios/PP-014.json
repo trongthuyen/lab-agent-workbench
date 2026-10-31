@@ -1,0 +1,1 @@
+{"id":"PP-014","category":"protected-path","description":"cat .env through bash is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"cat .env"}},"expect":{"allowed":false,"rule":"protected-path"}}
