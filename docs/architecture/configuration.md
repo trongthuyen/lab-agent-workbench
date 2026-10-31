@@ -68,6 +68,21 @@ than appended, so a project that overrides either list must restate the defaults
 In shell commands, `echo` and `printf` arguments are treated as text, so `echo .env >> .gitignore`
 is allowed while `echo x > .env` is not.
 
+## Telemetry location
+
+A project with `.lawb/config.json` writes telemetry to `telemetry.path`, which must stay inside the
+workspace (default `.lawb/runs/telemetry.jsonl`). A project **without** that file uses the built-in
+defaults and writes to `.lawb/runs/telemetry.jsonl` under the user's home directory instead
+(`os.homedir()`: `$HOME` on Linux and macOS, `%USERPROFILE%` on Windows), so uninitialized projects
+are not modified. Every record includes the `cwd` it came from. `telemetry.enabled: false` in a project
+config disables both.
+
+`lawb init` appends `**/.lawb` to the project `.gitignore` (idempotent; `.lawb`, `.lawb/`, `/.lawb`
+and `**/.lawb/` count as already present; an existing file keeps its LF or CRLF line endings;
+`--no-gitignore` skips it). This also ignores
+`.lawb/config.json`, so the config is not shared through git unless the entry is narrowed to
+`.lawb/runs/`.
+
 ## Loading a project file
 
 `.lawb/config.json` is applied as a layer over the defaults, so a file written by an older release

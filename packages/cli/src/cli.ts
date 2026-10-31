@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { initializeProject, readProjectConfig } from "./init.js";
+import { gitignoreEntry, initializeProject, readProjectConfig } from "./init.js";
 
 function readOption(args: string[], name: string): string | undefined {
   const index = args.indexOf(name);
@@ -7,7 +7,7 @@ function readOption(args: string[], name: string): string | undefined {
 }
 
 function printHelp(): void {
-  process.stdout.write(`Lab Agent Workbench CLI\n\nUsage:\n  lawb init --profile <name> [--force]\n  lawb config\n`);
+  process.stdout.write(`Lab Agent Workbench CLI\n\nUsage:\n  lawb init --profile <name> [--force] [--no-gitignore]\n  lawb config\n`);
 }
 
 async function main(args: string[]): Promise<void> {
@@ -22,13 +22,17 @@ async function main(args: string[]): Promise<void> {
     const result = await initializeProject({
       cwd: process.cwd(),
       profile,
-      force: args.includes("--force")
+      force: args.includes("--force"),
+      gitignore: !args.includes("--no-gitignore")
     });
     process.stdout.write(
       result.created
         ? `Created ${result.configPath}\n`
         : `Skipped existing ${result.configPath}; use --force to replace it.\n`
     );
+    if (result.gitignoreUpdated) {
+      process.stdout.write(`Added ${gitignoreEntry} to .gitignore\n`);
+    }
     return;
   }
 
