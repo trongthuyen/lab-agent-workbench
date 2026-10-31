@@ -44,13 +44,15 @@ lawb config
 
 ## Installation
 
-Packages are published under the `@lab-agent-workbench` npm scope. Until the first release is
-published, install from a clone instead (see [Publishing](./docs/publishing.md)).
+Packages are published to npm under the `@lab-agent-workbench` scope.
 
 ```bash
 pi install npm:@lab-agent-workbench/pi-extension      # Pi extension (add -l for project scope)
 npx @lab-agent-workbench/lawb init --profile nestjs   # writes .lawb/config.json
 ```
+
+Restart Pi after installing. Without `-l` the extension applies to every project you open with Pi;
+with `-l` it applies only to the current project.
 
 `lawb init` also appends `**/.lawb` to the project's `.gitignore` (creating it if needed), so the
 config and telemetry stay out of version control. Pass `--no-gitignore` to skip that. Teams that want
@@ -63,6 +65,20 @@ it. Telemetry for such projects goes to one shared log in your home directory,
 `~/.lawb/runs/telemetry.jsonl` (`%USERPROFILE%\.lawb\runs\telemetry.jsonl` on Windows); each record
 carries the `cwd` it came from. Run `lawb init` in a project to give it its own profile and its own
 `.lawb/runs/telemetry.jsonl`.
+
+### From a clone
+
+To run unreleased changes, build the repository and install the extension from its path:
+
+```bash
+git clone https://github.com/trongthuyen/lab-agent-workbench.git && cd lab-agent-workbench
+npm install && npm run build
+pi install ./packages/pi-extension
+node packages/cli/dist/cli.js init --profile nestjs   # run inside the target project
+```
+
+Rebuild with `npm run build` and restart Pi after pulling changes, because Pi loads
+`packages/pi-extension/dist/`. Releases are described in [Publishing](./docs/publishing.md).
 
 ## Security boundary
 
