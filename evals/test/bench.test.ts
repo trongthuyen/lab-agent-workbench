@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { lstat, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { isAbsolute, join, relative } from "node:path";
 import test from "node:test";
 import { evaluateToolCall, resolveConfig, getProfile } from "@lab-agent-workbench/core";
 import { classifyInfra, piArguments } from "../src/bench/run.js";
@@ -98,6 +98,19 @@ test("every refusal the policy can produce is recognised by the trace parser", (
     assert.ok(isWorkbenchRefusal(decision.reason ?? ""), decision.reason);
   }
   assert.equal(isWorkbenchRefusal("ENOENT: no such file"), false);
+});
+
+test("the refusals for recursive searches are recognised too", async () => {
+  const dir = await mkdtemp(join(tmpdir(), "lawb-refusal-"));
+  try {
+    await writeFile(join(dir, ".env"), "x", "utf8");
+    const decision = evaluateToolCall({ toolName: "bash", input: { command: "grep -rn postgres ." } }, dir, config);
+    assert.equal(decision.allowed, false);
+    assert.ok(isWorkbenchRefusal(decision.reason ?? ""), decision.reason);
+    assert.ok(isWorkbenchRefusal("Recursive search covers too many files to check for protected files"));
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
 });
 
 test("signals count only unblocked calls that the policy would refuse", async () => {
@@ -198,6 +211,10 @@ test("the report applies the pre-declared criteria", () => {
   const unsafe = records.map((entry) => (entry.arm === "workbench" && entry.task === "T09" && entry.index === 1 ? { ...entry, violation: true, unsafeExecuted: 1 } : entry));
   assert.equal(buildReport({ records: unsafe, tasks: info, manifest }).criteria.safety.met, false);
 
+  const workbenchOnly = buildReport({ records: records.filter((entry) => entry.arm === "workbench"), tasks: info, manifest });
+  assert.equal(workbenchOnly.criteria.nonInferiority.evaluated, false);
+  assert.equal(workbenchOnly.criteria.nonInferiority.met, false);
+
   const withInfra = records.map((entry) => (entry.task === "T01" && entry.index === 5 ? { ...entry, infra: true, passed: false } : entry));
   const excluded = buildReport({ records: withInfra, tasks: info, manifest });
   assert.equal(excluded.infraExcluded, 2);
@@ -252,6 +269,24 @@ test("the agent directory loads only the provider and shares credentials, not se
     assert.deepEqual(entries, ["auth.json", "npm", "settings.json"]);
     assert.ok((await lstat(join(directory, "auth.json"))).isSymbolicLink());
     assert.equal((await lstat(join(directory, "settings.json"))).isSymbolicLink(), false);
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});
+
+test("a relative output directory still yields absolute paths for the child process", async () => {
+  // Under the working directory, because path.relative returns an absolute path across Windows drives.
+  const root = await mkdtemp(join(process.cwd(), "lawb-relative-"));
+  try {
+    const source = join(root, "real");
+    await mkdir(source);
+    await writeFile(join(source, "auth.json"), "{}", "utf8");
+    const relativeRoot = relative(process.cwd(), join(root, "run"));
+    assert.equal(isAbsolute(relativeRoot), false);
+
+    const directory = await prepareAgentDirectory(relativeRoot, { source });
+    assert.equal(isAbsolute(directory), true);
+    assert.deepEqual(JSON.parse(await readFile(join(directory, "settings.json"), "utf8")).packages, ["npm:pi-claude-code-provider"]);
   } finally {
     await rm(root, { recursive: true, force: true });
   }

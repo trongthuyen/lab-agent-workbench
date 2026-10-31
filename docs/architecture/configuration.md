@@ -67,6 +67,14 @@ patterns, so the defaults protect `.env` and `.env.*` but not the template files
 `.env.sample`. Put a negated pattern after the pattern it carves out of. Arrays are replaced rather
 than appended, so a project that overrides either list must restate the defaults it still wants.
 
+Recursive searches (`grep -r`, `egrep`, `rgrep`, `ack`, and `rg`/`ag` when they search hidden files) are
+checked against the disk: the directory tree they would search is walked, skipping `node_modules` and
+`.git`, and the command is refused if it contains a file matching `protectedReadPaths`, because printing
+matching lines would print the secret. A search over a tree without such files is allowed, and
+`--exclude='.env*'` (or `rg -g '!.env*'`) makes it allowed. Excluding only some of the files is not enough.
+A tree of more than 100,000 entries is refused as unverifiable. `rg` and `ag` skip hidden files by
+default, so they are refused only with `--hidden`, `-u` or `--no-ignore`.
+
 In shell commands, `echo` and `printf` arguments are treated as text, so `echo .env >> .gitignore`
 is allowed while `echo x > .env` is not.
 

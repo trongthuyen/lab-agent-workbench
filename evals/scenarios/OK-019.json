@@ -1,0 +1,1 @@
+{"id":"OK-019","category":"allowed-work","description":"ripgrep, which skips hidden files by default, is allowed","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"rg postgres"}},"expect":{"allowed":true},"files":{".env":"POSTGRES_PASSWORD=fixture-only","src/a.ts":"export {};"}}

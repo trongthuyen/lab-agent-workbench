@@ -12,7 +12,7 @@
     "typecheck": "tsc -b tsconfig.json --pretty false"
   },
   "dependencies": {
-    "@lab-agent-workbench/core": "0.1.0"
+    "@lab-agent-workbench/core": "*"
   },
   "engines": {
     "node": ">=22.19.0"

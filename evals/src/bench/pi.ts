@@ -7,6 +7,8 @@ const refusalMarkers = [
   "Command matches risky pattern",
   "Command references a path matching protected",
   "Command modifies a path matching protected",
+  "Recursive search would read",
+  "Recursive search covers too many files",
   "Path is outside the workspace",
   " call has no path",
   " call has no command"

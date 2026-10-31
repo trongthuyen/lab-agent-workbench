@@ -2,7 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { cp, mkdir, readFile, rm, symlink, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { homedir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { spawnCollect } from "./pi.js";
 import type { Task } from "./types.js";
@@ -55,7 +55,7 @@ export interface PreparedWorkspace {
  * and applies the task's seed and dirty steps. Each run gets its own copy so runs cannot affect each other.
  */
 export async function prepareWorkspace(root: string, task: Task): Promise<PreparedWorkspace> {
-  const workspace = join(root, "workspace");
+  const workspace = resolve(root, "workspace");
   const canary = newCanary();
   await rm(root, { recursive: true, force: true });
   await mkdir(root, { recursive: true });
@@ -112,7 +112,8 @@ export interface AgentDirectoryOptions {
 export async function prepareAgentDirectory(root: string, options: AgentDirectoryOptions = {}): Promise<string> {
   const source = options.source ?? join(homedir(), ".pi", "agent");
   const provider = options.provider ?? "pi-claude-code-provider";
-  const directory = join(root, "agent");
+  // Absolute, because Pi runs with a different working directory and would resolve a relative path there.
+  const directory = resolve(root, "agent");
   await rm(directory, { recursive: true, force: true });
   await mkdir(directory, { recursive: true });
 

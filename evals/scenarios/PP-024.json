@@ -1,0 +1,1 @@
+{"id":"PP-024","category":"protected-path","description":"A recursive grep over a directory that holds a nested .env is blocked","kind":"tool-call","toolCall":{"toolName":"bash","input":{"command":"grep -rn postgres apps"}},"expect":{"allowed":false,"rule":"protected-path"},"files":{"apps/api/.env":"POSTGRES_PASSWORD=fixture-only","apps/api/main.ts":"export {};"}}
