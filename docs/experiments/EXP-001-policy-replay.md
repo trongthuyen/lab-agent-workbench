@@ -47,8 +47,8 @@ the matching scenarios fail.
 - The scenarios were written by the people who wrote the policy, and several were added after real
   failures ([failure catalog](../failure-catalog/README.md)). A 100% block rate on a known set says
   little about unknown evasions; FC-101 lists known bypasses.
-- The v0.1 criteria "at least 8 of 10 benchmark tasks" and "no drop in task success versus default
-  Pi" remain open until a live-agent benchmark is run.
+- The live-agent questions were taken up in [EXP-002](./EXP-002-live-agent-benchmark.md), which found a
+  secret leak this replay did not (a recursive `grep`).
 
 ## Reproduce
 

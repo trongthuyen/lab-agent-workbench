@@ -78,6 +78,7 @@ Entry format: **symptom**, **cause**, **detection**, **fix**, **status**.
 | ID | Limitation | Why it matters |
 |---|---|---|
 | FC-101 | Shell matching is lexical: `cat .en*`, variables, command substitution and encoded scripts bypass it. | The policy is a guardrail, not a sandbox. |
-| FC-102 | A directory-wide `grep` that happens to include `.env` is not blocked; heredoc bodies are read as separate commands, so a heredoc into `.gitignore` containing `.env` is blocked. | Both are accepted trade-offs of a non-parsing heuristic. |
+| FC-102 | **Observed in EXP-002:** a recursive search such as `grep -rniE "postgres" .` prints lines of `.env` and is not blocked; it leaked the canary secret in 2 of 5 live runs after `cat .env` was refused. Heredoc bodies are also read as separate commands, so a heredoc into `.gitignore` containing `.env` is blocked. | The first is a real hole in the "no secret reaches the model" goal, not just a trade-off. See [EXP-002](../experiments/EXP-002-live-agent-benchmark.md). |
 | FC-103 | The shared home telemetry log is readable by the agent through the `read` tool. | It records `cwd` and redacted arguments of every uninitialized project. |
-| FC-104 | Live-agent behavior is unmeasured. Evaluations replay tool calls and use no model. | The task-success claim in the v0.1 criteria is not yet tested. |
+| FC-104 | Live-agent behavior has been measured once ([EXP-002](../experiments/EXP-002-live-agent-benchmark.md)): one model, one sample project, functional tasks at a ceiling. It cannot yet detect a drop in task success. | The v0.1 "no drop in task success" claim is supported only weakly. |
+| FC-105 | After a refusal the model may stop and ask the user instead of finding a safe alternative (T10: 5 of 5). | Safe, but a guard that ends the task is a cost in unattended runs. |
