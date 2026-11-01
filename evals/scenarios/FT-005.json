@@ -1,0 +1,9 @@
+{
+  "id": "FT-005",
+  "category": "feature-control",
+  "description": "All features off still refuses a missing shell command",
+  "kind": "tool-call",
+  "features": { "writeProtection": false, "readProtection": false, "riskyCommands": false, "telemetry": false },
+  "toolCall": { "toolName": "bash", "input": {} },
+  "expect": { "allowed": false, "rule": "risky-command" }
+}

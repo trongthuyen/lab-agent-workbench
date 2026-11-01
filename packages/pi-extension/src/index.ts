@@ -2,6 +2,7 @@ import { appendFile, mkdir, readFile } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { registerFeatureControls } from "./feature-controls.js";
 import {
   evaluateToolCall,
   redact,
@@ -35,7 +36,11 @@ async function loadConfig(cwd: string): Promise<LoadedConfig> {
     if (code === "ENOENT") {
       return { config: resolveConfig(), defaulted: true };
     }
-    throw error;
+    // Pi can report hook errors to the terminal/model. Never echo JSON snippets or arbitrary keys.
+    if (error instanceof SyntaxError) {
+      throw new SyntaxError("Invalid JSON in .lawb/config.json; fix the file and /reload.");
+    }
+    throw new Error("Cannot load .lawb/config.json; check its configuration and permissions, then /reload.");
   }
 }
 
@@ -58,7 +63,7 @@ export function createLabAgentWorkbench(options: ExtensionOptions = {}): (pi: Ex
     const home = options.homeDirectory ?? homedir();
     const pending = new Map<string, PendingCall>();
     const configs = new Map<string, Promise<LoadedConfig>>();
-    const configFor = (cwd: string): Promise<LoadedConfig> => {
+    const loadedConfigFor = (cwd: string): Promise<LoadedConfig> => {
       let loaded = configs.get(cwd);
       if (!loaded) {
         loaded = loadConfig(cwd);
@@ -67,8 +72,14 @@ export function createLabAgentWorkbench(options: ExtensionOptions = {}): (pi: Ex
       return loaded;
     };
 
+    const configFor = registerFeatureControls(
+      pi,
+      async (cwd) => (await loadedConfigFor(cwd)).config,
+      () => { configs.clear(); pending.clear(); }
+    );
+
     pi.on("tool_call", async (event, ctx) => {
-      const { config } = await configFor(ctx.cwd);
+      const config = await configFor(ctx.cwd);
       const decision = evaluateToolCall(
         { toolName: event.toolName, input: event.input },
         ctx.cwd,
@@ -81,7 +92,7 @@ export function createLabAgentWorkbench(options: ExtensionOptions = {}): (pi: Ex
     });
 
     pi.on("tool_execution_start", async (event, ctx) => {
-      const { config } = await configFor(ctx.cwd);
+      const config = await configFor(ctx.cwd);
       if (!config.telemetry.enabled) {
         return;
       }
@@ -92,8 +103,10 @@ export function createLabAgentWorkbench(options: ExtensionOptions = {}): (pi: Ex
     });
 
     pi.on("tool_execution_end", async (event, ctx) => {
-      const { config, defaulted } = await configFor(ctx.cwd);
+      const config = await configFor(ctx.cwd);
+      const { defaulted } = await loadedConfigFor(ctx.cwd);
       if (!config.telemetry.enabled) {
+        pending.delete(event.toolCallId);
         return;
       }
 

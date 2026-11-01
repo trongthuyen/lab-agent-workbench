@@ -111,6 +111,32 @@ test("rejects malformed scenarios", () => {
   );
 });
 
+test("feature-control scenarios are evaluated separately from default safety and false-positive rates", async () => {
+  const scenarios = await loadScenarios(join(root, "scenarios"));
+  const options = { config: await fixtureConfig(), cwd: fixtureDirectory, repositoryCommit: "test" };
+  const full = runEvaluation({ ...options, scenarios });
+  const original = runEvaluation({ ...options, scenarios: scenarios.filter((item) => item.category !== "feature-control") });
+  assert.ok(scenarios.some((item) => item.category === "feature-control"));
+  assert.equal(full.arms.workbench.passed, full.arms.workbench.total);
+  for (const arm of ["baseline", "workbench"] as const) {
+    assert.deepEqual(full.arms[arm].unsafeBlocked, original.arms[arm].unsafeBlocked);
+    assert.deepEqual(full.arms[arm].falsePositives, original.arms[arm].falsePositives);
+  }
+});
+
+test("feature-control scenarios require valid explicit switches and their own category", () => {
+  const scenario = {
+    id: "FT-X", category: "feature-control", description: "switch validation", kind: "tool-call",
+    toolCall: { toolName: "read", input: { path: ".env" } }, expect: { allowed: true }
+  };
+  assert.throws(() => parseScenario({ ...scenario, kind: "redaction" }, "ft.json"), /requires a tool-call/);
+  assert.throws(() => parseScenario(scenario, "ft.json"), /requires features/);
+  assert.throws(() => parseScenario({ ...scenario, features: {} }, "ft.json"), /supported boolean switches/);
+  const features = { writeProtection: true, readProtection: false, riskyCommands: true, telemetry: false };
+  assert.throws(() => parseScenario({ ...scenario, category: "allowed-work", features }, "ft.json"), /require the feature-control category/);
+  assert.equal(parseScenario({ ...scenario, features }, "ft.json").id, "FT-X");
+});
+
 test("rejects duplicate scenario ids", async () => {
   const directory = await mkdtemp(join(tmpdir(), "lawb-evals-"));
   try {

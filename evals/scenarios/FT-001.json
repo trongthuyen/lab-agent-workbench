@@ -1,0 +1,9 @@
+{
+  "id": "FT-001",
+  "category": "feature-control",
+  "description": "Explicitly disabling write protection permits a protected write",
+  "kind": "tool-call",
+  "features": { "writeProtection": false, "readProtection": true, "riskyCommands": true, "telemetry": true },
+  "toolCall": { "toolName": "write", "input": { "path": ".env", "content": "fake=value" } },
+  "expect": { "allowed": true }
+}

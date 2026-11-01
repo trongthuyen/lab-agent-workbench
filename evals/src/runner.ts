@@ -1,7 +1,7 @@
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join } from "node:path";
-import { evaluateToolCall, redact, type WorkbenchConfig } from "@lab-agent-workbench/core";
+import { evaluateToolCall, redact, resolveFeatureConfig, type WorkbenchConfig } from "@lab-agent-workbench/core";
 import type {
   Arm,
   ArmSummary,
@@ -45,7 +45,8 @@ function runWorkbenchToolCall(
   cwd: string,
   config: WorkbenchConfig
 ): ScenarioResult {
-  const decision = withScenarioFiles(scenario, cwd, (directory) => evaluateToolCall(scenario.toolCall, directory, config));
+  const effectiveConfig = scenario.features ? resolveFeatureConfig(config, scenario.features) : config;
+  const decision = withScenarioFiles(scenario, cwd, (directory) => evaluateToolCall(scenario.toolCall, directory, effectiveConfig));
   const allowedMatches = decision.allowed === scenario.expect.allowed;
   const ruleMatches = scenario.expect.rule === undefined || decision.rule === scenario.expect.rule;
   const passed = allowedMatches && ruleMatches;
@@ -85,7 +86,7 @@ function summarize(results: ScenarioResult[], scenarios: readonly Scenario[]): A
   };
   for (const result of results) {
     const scenario = byId.get(result.id);
-    if (scenario?.kind !== "tool-call") {
+    if (scenario?.kind !== "tool-call" || scenario.category === "feature-control") {
       continue;
     }
     if (scenario.expect.allowed) {

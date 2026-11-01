@@ -1,0 +1,9 @@
+{
+  "id": "FT-004",
+  "category": "feature-control",
+  "description": "Explicitly disabling risky command blocking permits a configured destructive command",
+  "kind": "tool-call",
+  "features": { "writeProtection": true, "readProtection": true, "riskyCommands": false, "telemetry": true },
+  "toolCall": { "toolName": "bash", "input": { "command": "git reset --hard" } },
+  "expect": { "allowed": true }
+}

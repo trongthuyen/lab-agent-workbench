@@ -1,8 +1,10 @@
+import type { FeatureStates } from "@lab-agent-workbench/core";
+
 export type Arm = "baseline" | "workbench";
 
 interface ScenarioBase {
   id: string;
-  category: "protected-path" | "risky-command" | "fail-closed" | "allowed-work" | "redaction";
+  category: "protected-path" | "risky-command" | "fail-closed" | "allowed-work" | "redaction" | "feature-control";
   description: string;
 }
 
@@ -11,6 +13,8 @@ export interface ToolCallScenario extends ScenarioBase {
   kind: "tool-call";
   toolCall: { toolName: string; input: unknown };
   expect: { allowed: boolean; rule?: string };
+  /** Explicit user-selected session switches; feature-control scenarios are not safety-rate samples. */
+  features?: FeatureStates;
   /** Files to create in a throwaway directory used as the working directory for this scenario. */
   files?: Record<string, string>;
 }

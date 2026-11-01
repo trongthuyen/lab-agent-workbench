@@ -51,7 +51,14 @@ Status: v0.1 draft
 - `lawb gates` executes the commands in `.lawb/config.json` with the user's permissions. A config from an
   untrusted repository can therefore run arbitrary commands, exactly as its npm scripts could; read the
   printed commands and the config before running gates there.
-- The current implementation does not prompt for conditional approval; it only allows or blocks.
+- Individual tool calls do not prompt for conditional approval; they are allowed or blocked.
+- The v0.1.2 `/lawb` TUI lets an idle user disable guardrails for a Pi session branch after
+  confirmation. That intentionally removes the corresponding checks; a visible footer warning is
+  informational, not enforcement. Turning a switch back on restores configured rules, which may
+  themselves be weak or empty. Invalid config/required arguments still fail closed.
+- Feature choices persist in Pi session metadata and can be inherited on resume/fork. There is no
+  model-callable toggle tool, but session files and same-process extensions are not tamper-resistant.
+  Review imported sessions as trusted local state; this UI is not an authorization or sandbox boundary.
 
 ## Planned mitigations
 

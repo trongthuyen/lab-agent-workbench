@@ -25,7 +25,8 @@ async function sandbox(): Promise<Sandbox> {
   createLabAgentWorkbench({ homeDirectory: home })({
     on: (name: string, handler: Handler) => {
       handlers[name] = handler;
-    }
+    },
+    registerCommand: () => {}
   } as never);
   return { home, project, handlers, cleanup: () => rm(root, { recursive: true, force: true }) };
 }
@@ -151,10 +152,14 @@ test("an invalid project config fails closed instead of falling back to defaults
   const box = await sandbox();
   try {
     await mkdir(join(box.project, ".lawb"));
-    await writeFile(join(box.project, ".lawb", "config.json"), "{ not json", "utf8");
+    await writeFile(join(box.project, ".lawb", "config.json"), '{ "token": "fixture-config-canary", not json', "utf8");
     await assert.rejects(
       box.handlers.tool_call?.({ toolName: "bash", input: { command: "ls" } }, { cwd: box.project }) ?? Promise.resolve(),
-      SyntaxError
+      (error: unknown) => {
+        assert.ok(error instanceof SyntaxError);
+        assert.equal(error.message.includes("fixture-config-canary"), false);
+        return true;
+      }
     );
   } finally {
     await box.cleanup();

@@ -16,8 +16,41 @@ Configuration layers are applied in this order:
 4. Session override
 
 Later layers take precedence. In v0.1 the project override is the `.lawb/config.json` file itself (loaded over the
-base defaults). The session override layer is part of the contract but is not wired into the runtime yet; it is
-deferred to Phase 2 together with session management. Objects merge recursively. Arrays and scalar values are replaced as a whole; arrays are never appended implicitly.
+base defaults). The v0.1.2 pre-Phase 2 `/lawb` TUI wires a narrowly scoped session override layer
+for feature switches, described below; arbitrary session configuration is still deferred.
+Objects merge recursively. Arrays and scalar values are replaced as a whole; arrays are never appended implicitly.
+
+## Session feature switches (v0.1.2)
+
+`/lawb` is an idle-only, interactive Pi command, not a model-callable tool. Draft changes require
+Ctrl+S to apply; Esc cancels, and disabling guardrails requires explicit confirmation. It adds a
+session layer over the unchanged base/project configuration:
+
+| Switch | When off |
+|---|---|
+| Write protection | `policies.allowOutsideWorkspace: true`, `policies.protectedPaths: []` |
+| Secret read protection | `policies.protectedReadPaths: []` |
+| Risky command blocking | `policies.riskyCommandPatterns: []` |
+| Telemetry | `telemetry.enabled: false` |
+
+When a guardrail is on, its original configured values are used; no list is erased from project
+config. Telemetry initially follows project config and can be explicitly enabled for the session.
+All-on is not proof that rule lists are non-empty. Missing/invalid required tool arguments are
+still refused, and invalid project configuration still fails closed even with all switches off.
+
+Pi owns persistence: a `lawb-features` custom entry contains only `version: 1`, `cwd`, and the four
+boolean `features` (`writeProtection`, `readProtection`, `riskyCommands`, `telemetry`). Restore uses
+the newest entry on the active branch, never inactive branches. Invalid state falls back to project
+defaults with a warning; a different workspace cannot inherit the saved switches. New sessions
+start from defaults, resume/reload restores, fork inherits at its fork point, and tree navigation
+reconstructs state. Session transitions clear config and pending-call caches, so `/reload` also
+picks up repaired or edited project config.
+
+Switches are not written into `.lawb/config.json`, shared with other sessions, or applied to CLI
+commands. Existing v1 files need no migration. Session files are trusted local state, not a
+tamper-resistant security store. Pi only creates a new session file after a user/assistant message;
+switches set before the first prompt stay in memory until then. In ephemeral Pi sessions switches
+last only until exit.
 
 ## Validation
 

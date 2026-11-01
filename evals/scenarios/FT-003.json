@@ -1,0 +1,9 @@
+{
+  "id": "FT-003",
+  "category": "feature-control",
+  "description": "Explicitly disabling secret read protection permits a protected read",
+  "kind": "tool-call",
+  "features": { "writeProtection": true, "readProtection": false, "riskyCommands": true, "telemetry": true },
+  "toolCall": { "toolName": "read", "input": { "path": ".env" } },
+  "expect": { "allowed": true }
+}

@@ -1,0 +1,9 @@
+{
+  "id": "FT-002",
+  "category": "feature-control",
+  "description": "Disabling write protection does not disable secret read protection",
+  "kind": "tool-call",
+  "features": { "writeProtection": false, "readProtection": true, "riskyCommands": true, "telemetry": true },
+  "toolCall": { "toolName": "read", "input": { "path": ".env" } },
+  "expect": { "allowed": false, "rule": "protected-path" }
+}
