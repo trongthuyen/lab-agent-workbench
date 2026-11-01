@@ -3,9 +3,27 @@
 Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workbench/pi-extension` and
 `@lab-agent-workbench/lawb` always share a version, because the other two pin `core` exactly.
 
+## 0.1.2 (2026-11-01)
+
+### Added
+
+- `/lawb` interactive Pi feature menu for write/workspace protection, secret read protection,
+  risky-command blocking and redacted telemetry. Changes are draft-only until Ctrl+S; cancel leaves
+  live config untouched. Disabling guardrails requires confirmation and displays a footer warning.
+- Branch-scoped session switches survive resume/reload and follow fork/tree navigation. New sessions
+  use project defaults; project config and standalone CLI commands are unchanged. No model-callable
+  toggle tool is registered. Missing required arguments and invalid config still fail closed.
+- Feature-control replay scenarios plus keyboard, lifecycle, cancellation and telemetry regressions.
+
+### Changed
+
+- Session transitions clear cached config and pending telemetry calls; `/reload` picks up config edits.
+- Pi coding-agent and TUI peer compatibility is now `^1.4.0`, tested against 1.4.0.
+
 ## 0.1.1 (2026-10-31)
 
 ### Added
+
 - `lawb gates` runs the commands in `qualityGates.commands`, prints them first, and exits non-zero on a
   failure, when none are configured, or when there is no config. `--bail` stops at the first failure.
 - Recursive searches (`grep -r`, `egrep`, `rgrep`, `ack`, and `rg`/`ag` with `--hidden` or `-u`) are
@@ -16,6 +34,7 @@ Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workben
   with `-Recurse -Force`, including abbreviated parameters such as `-rec -fo`.
 
 ### Changed
+
 - Shell commands are split on `;`, `|`, `||` and `&&` outside quotes, so a quoted `|` in a search pattern no
   longer cuts a command in two.
 - The policy now reads the file system when it checks a recursive search, so that decision depends on the
@@ -23,6 +42,7 @@ Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workben
 - An exclusion value such as `--exclude=.env` is no longer treated as reading `.env`.
 
 ### Upgrading
+
 - Update the extension and the CLI together (`pi install npm:@lab-agent-workbench/pi-extension`, then restart
   Pi). The extension's policy comes from `core`, so the new checks apply as soon as it loads.
 - **Existing `.lawb/config.json` files keep their old pattern lists**, because arrays in a project file
@@ -31,6 +51,7 @@ Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workben
   file beyond `protectedReadPaths`, which older files already have or receive by default.
 
 ### Not in the packages
+
 The live-agent benchmark (`npm run bench`), the evaluation scenarios, the failure catalog and the EXP-001 to
 EXP-002b reports live in the repository only.
 

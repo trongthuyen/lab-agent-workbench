@@ -1,0 +1,9 @@
+{
+  "id": "FT-006",
+  "category": "feature-control",
+  "description": "Enabling protection and disabling telemetry leaves protected writes blocked",
+  "kind": "tool-call",
+  "features": { "writeProtection": true, "readProtection": true, "riskyCommands": true, "telemetry": false },
+  "toolCall": { "toolName": "write", "input": { "path": ".env", "content": "fake=value" } },
+  "expect": { "allowed": false, "rule": "protected-path" }
+}

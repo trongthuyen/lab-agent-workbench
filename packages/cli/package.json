@@ -1,6 +1,6 @@
 {
   "name": "@lab-agent-workbench/lawb",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "CLI for Lab Agent Workbench",
   "keywords": [
     "agent",
@@ -38,7 +38,7 @@
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
-    "@lab-agent-workbench/core": "0.1.1"
+    "@lab-agent-workbench/core": "0.1.2"
   },
   "engines": {
     "node": ">=22.19.0"

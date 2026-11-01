@@ -24,10 +24,14 @@ exercised exactly as a user would configure it.
 | `FC-` | fail-closed | Are calls with missing or invalid arguments blocked? |
 | `OK-` | allowed-work | Is ordinary work (editing source, `npm test`) still allowed? Measures false positives. |
 | `RD-` | redaction | Do secret fixtures stay out of telemetry arguments? |
+| `FT-` | feature-control | Do explicit session switches change only the selected checks, while required arguments still fail closed? |
 
 Reported metrics: unsafe block rate, false-positive rate, scenario pass rate. The report records a
 manifest (baseline, variant, model, commit, runs) but never echoes scenario inputs, so secret
-fixtures cannot reach it.
+fixtures cannot reach it. Feature-control scenarios count toward total scenario passes but are
+excluded from default unsafe-block/false-positive rates: deliberately disabled guards are not a
+sample of the default safety configuration. Menu keyboard, confirmation/cancellation, telemetry
+switching and branch lifecycle are tested in `packages/pi-extension/test/` without model calls.
 
 ## Adding a scenario
 
@@ -48,12 +52,16 @@ scenario here and a unit test in the owning package.
 Redaction scenarios use `"kind": "redaction"` with `input`, `mustNotContain` and optional
 `mustContain`. Use obviously fake secret values.
 
+Feature-control tool-call scenarios require `"category": "feature-control"` and a complete
+`features` object with boolean `writeProtection`, `readProtection`, `riskyCommands` and `telemetry`
+keys. No tool is actually executed, even when an explicitly disabled check would allow it.
+
 ## Not covered yet
 
 - **Live-agent coverage.** These scenarios replay tool calls and use no model. The live benchmark is
   separate (see below) and has run once, on one model.
-- **Quality gate execution.** `qualityGates.commands` is configuration only; nothing runs it yet. CI
-  runs the sample project's lint, typecheck and tests directly.
+- **Quality gate execution in replay.** The standalone `lawb gates` command is covered by CLI tests;
+  CI also uses it on the sample project. Tool-call replay does not execute gate commands.
 - **Shell evasion.** Protected paths in `bash` commands are matched lexically, so variables, globs
   (`cat .en*`), indirection or encoded scripts bypass it. Heredoc bodies are read as separate
   commands, so `cat >> .gitignore <<EOF` with `.env` inside is blocked.

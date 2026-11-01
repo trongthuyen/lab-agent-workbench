@@ -62,6 +62,21 @@ with `-l` it applies only to the current project.
 config and telemetry stay out of version control. Pass `--no-gitignore` to skip that. Teams that want
 to share the config should skip it and ignore only `.lawb/runs/`.
 
+### Interactive feature controls (v0.1.2)
+
+In Pi, run `/lawb` to toggle write/workspace protection, secret read protection, risky-command
+blocking, and redacted telemetry. Use Up/Down to select, Enter/Space to toggle, **Ctrl+S to apply**,
+and Esc to discard. Disabling guardrails requires confirmation and leaves a visible footer warning.
+
+Switches apply to **this Pi session's active branch**: they survive resume/reload and follow
+fork/tree navigation, but a new session starts from project defaults. They do not edit
+`.lawb/config.json` or affect other sessions or the standalone CLI. Re-enabling a guardrail restores
+its configured rules, not necessarily the built-in defaults. Quality gates remain an explicit
+`lawb gates` command; there is no fake switch for CLI commands or unimplemented Phase 2 features.
+
+From a clone, build and install the local extension as described below, then restart Pi. The menu
+requires interactive TUI mode; policy and telemetry still work in print/JSON/RPC modes.
+
 ### Quality gates
 
 `lawb gates` runs the commands in `qualityGates.commands` (for the `nestjs` profile: `npm run lint`,

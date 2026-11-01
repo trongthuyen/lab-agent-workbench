@@ -1,8 +1,9 @@
 import { readdir, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import type { Scenario } from "./types.js";
+import { validateFeatureStates } from "@lab-agent-workbench/core";
 
-const categories = new Set(["protected-path", "risky-command", "fail-closed", "allowed-work", "redaction"]);
+const categories = new Set(["protected-path", "risky-command", "fail-closed", "allowed-work", "redaction", "feature-control"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -29,6 +30,10 @@ export function parseScenario(value: unknown, source: string): Scenario {
     return fail("description must be a non-empty string");
   }
 
+  if (value.category === "feature-control" && value.kind !== "tool-call") {
+    return fail("feature-control requires a tool-call scenario");
+  }
+
   if (value.kind === "tool-call") {
     const { toolCall, expect } = value;
     if (!isRecord(toolCall) || typeof toolCall.toolName !== "string") {
@@ -43,6 +48,11 @@ export function parseScenario(value: unknown, source: string): Scenario {
     if (!expect.allowed && expect.rule === undefined) {
       return fail("a blocked expectation must name the expected rule");
     }
+    if (value.features !== undefined) {
+      if (value.category !== "feature-control") return fail("features require the feature-control category");
+      try { validateFeatureStates(value.features); } catch { return fail("features must contain exactly the supported boolean switches"); }
+    }
+    if (value.category === "feature-control" && value.features === undefined) return fail("feature-control requires features");
     if (value.files !== undefined) {
       const files = value.files;
       if (!isRecord(files) || Object.values(files).some((content) => typeof content !== "string")) {
