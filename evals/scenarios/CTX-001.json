@@ -1,0 +1,24 @@
+{
+  "id": "CTX-001",
+  "category": "context",
+  "description": "The document that answers the query is selected, unrelated ones are not",
+  "kind": "context",
+  "files": {
+    "docs/auth.md": "# Authentication\n\nTokens expire after fifteen minutes.\n",
+    "docs/billing.md": "# Billing\n\nInvoices are monthly.\n",
+    "docs/misc.md": "# Misc\n\nNothing relevant.\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "how do authentication tokens expire",
+  "expect": {
+    "selected": [
+      "docs/auth.md"
+    ]
+  }
+}

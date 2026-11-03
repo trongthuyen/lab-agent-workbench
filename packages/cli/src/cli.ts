@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { loadProjectConfig } from "@lab-agent-workbench/core";
+import { formatInspect, inspectContext } from "./context.js";
 import { runQualityGates } from "./gates.js";
 import { gitignoreEntry, initializeProject, readProjectConfig } from "./init.js";
 
@@ -8,7 +10,7 @@ function readOption(args: string[], name: string): string | undefined {
 }
 
 function printHelp(): void {
-  process.stdout.write(`Lab Agent Workbench CLI\n\nUsage:\n  lawb init --profile <name> [--force] [--no-gitignore]\n  lawb config\n  lawb gates [--bail]\n`);
+  process.stdout.write(`Lab Agent Workbench CLI\n\nUsage:\n  lawb init --profile <name> [--force] [--no-gitignore]\n  lawb config\n  lawb gates [--bail]\n  lawb context inspect --query <text> [--json]\n`);
 }
 
 async function main(args: string[]): Promise<void> {
@@ -76,6 +78,22 @@ async function main(args: string[]): Promise<void> {
     if (failed > 0) {
       process.exitCode = 1;
     }
+    return;
+  }
+
+  if (command === "context") {
+    if (args[1] !== "inspect") {
+      throw new Error("Usage: lawb context inspect --query <text> [--json]");
+    }
+    const query = readOption(args, "--query");
+    if (query === undefined || query.trim() === "") {
+      throw new Error("lawb context inspect requires --query <text>");
+    }
+    const { config } = await loadProjectConfig(process.cwd());
+    const controller = new AbortController();
+    process.once("SIGINT", () => controller.abort());
+    const report = await inspectContext({ root: process.cwd(), query, config, signal: controller.signal });
+    process.stdout.write(args.includes("--json") ? `${JSON.stringify(report, null, 2)}\n` : formatInspect(report));
     return;
   }
 

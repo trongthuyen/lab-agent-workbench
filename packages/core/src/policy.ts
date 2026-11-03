@@ -26,6 +26,11 @@ function globToRegExp(glob: string): RegExp {
   return new RegExp(`^${source}$`, "i");
 }
 
+/** Matches a workspace-relative, forward-slash path against a glob (case-insensitive). */
+export function matchesGlob(glob: string, relativePath: string): boolean {
+  return globToRegExp(normalizeRelativePath(glob)).test(relativePath);
+}
+
 // Patterns apply in order and the last match wins; a leading "!" re-allows paths matched earlier.
 function findProtectedPattern(
   inputPath: string,

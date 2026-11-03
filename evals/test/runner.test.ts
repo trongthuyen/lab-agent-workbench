@@ -114,8 +114,8 @@ test("rejects malformed scenarios", () => {
 test("feature-control scenarios are evaluated separately from default safety and false-positive rates", async () => {
   const scenarios = await loadScenarios(join(root, "scenarios"));
   const options = { config: await fixtureConfig(), cwd: fixtureDirectory, repositoryCommit: "test" };
-  const full = runEvaluation({ ...options, scenarios });
-  const original = runEvaluation({ ...options, scenarios: scenarios.filter((item) => item.category !== "feature-control") });
+  const full = await runEvaluation({ ...options, scenarios });
+  const original = await runEvaluation({ ...options, scenarios: scenarios.filter((item) => item.category !== "feature-control") });
   assert.ok(scenarios.some((item) => item.category === "feature-control"));
   assert.equal(full.arms.workbench.passed, full.arms.workbench.total);
   for (const arm of ["baseline", "workbench"] as const) {
@@ -153,5 +153,51 @@ test("rejects duplicate scenario ids", async () => {
     await assert.rejects(loadScenarios(directory), /Duplicate scenario id/);
   } finally {
     await rm(directory, { recursive: true, force: true });
+  }
+});
+
+test("context scenarios detect a read-protection regression without leaking canaries into the report", async () => {
+  const weakened = resolveConfig(await fixtureConfig(), { policies: { protectedReadPaths: [] } });
+  const report = await evaluate(weakened);
+  const failed = report.results.filter((item) => item.arm === "workbench" && !item.passed && item.skipped !== true).map((item) => item.id);
+  assert.ok(failed.includes("CTX-SAFE-001"));
+  assert.ok(failed.includes("CTX-SAFE-004") || report.results.some((item) => item.id === "CTX-SAFE-004" && item.skipped === true));
+  assert.ok(!JSON.stringify(report).includes("CANARY"));
+});
+
+test("context scenarios are workbench-only and excluded from the default safety rates", async () => {
+  const scenarios = await loadScenarios(join(root, "scenarios"));
+  const context = scenarios.filter((scenario) => scenario.kind === "context");
+  assert.ok(context.length >= 12);
+  const full = await runEvaluation({ scenarios, config: await fixtureConfig(), cwd: fixtureDirectory, repositoryCommit: "test" });
+  const without = await runEvaluation({
+    scenarios: scenarios.filter((scenario) => scenario.kind !== "context"),
+    config: await fixtureConfig(),
+    cwd: fixtureDirectory,
+    repositoryCommit: "test"
+  });
+  assert.deepEqual(full.arms.workbench.unsafeBlocked, without.arms.workbench.unsafeBlocked);
+  assert.deepEqual(full.arms.workbench.falsePositives, without.arms.workbench.falsePositives);
+  assert.equal(full.results.filter((item) => item.arm === "baseline").length, without.results.filter((item) => item.arm === "baseline").length);
+});
+
+test("rejects malformed context scenarios", () => {
+  const valid = {
+    id: "CTX-X", category: "context", description: "d", kind: "context",
+    files: { "a.md": "x" }, query: "q", expect: { selected: [] }
+  };
+  assert.doesNotThrow(() => parseScenario(valid, "x"));
+  const cases: [Record<string, unknown>, RegExp][] = [
+    [{ ...valid, category: "protected-path" }, /used together/],
+    [{ ...valid, kind: "tool-call", toolCall: { toolName: "read" }, expect: { allowed: true } }, /used together/],
+    [{ ...valid, files: undefined }, /files must map/],
+    [{ ...valid, files: { "a.md": 1 } }, /files must map/],
+    [{ ...valid, query: 5 }, /query must be a string/],
+    [{ ...valid, expect: {} }, /expect\.selected/],
+    [{ ...valid, expect: { selected: [], skipped: { "a.md": 1 } } }, /expect\.skipped/],
+    [{ ...valid, expect: { selected: [], mustNotContain: [1] } }, /mustNotContain/]
+  ];
+  for (const [value, message] of cases) {
+    assert.throws(() => parseScenario(value, "x"), message);
   }
 });

@@ -1,0 +1,35 @@
+{
+  "id": "CTX-SAFE-003",
+  "category": "context-safety",
+  "description": "A symlink to a file outside the workspace is not read",
+  "kind": "context",
+  "files": {
+    "docs/real.md": "# Widget\n\nwidget docs\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "outsideFiles": {
+    "secret.md": "# Secret\n\nCANARY-OUT widget\n"
+  },
+  "symlinks": {
+    "docs/escape.md": "outside:secret.md"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/real.md"
+    ],
+    "skipped": {
+      "docs/escape.md": "outside-workspace"
+    },
+    "mustNotContain": [
+      "CANARY-OUT"
+    ]
+  }
+}

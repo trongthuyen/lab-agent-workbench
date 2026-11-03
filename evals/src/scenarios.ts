@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { Scenario } from "./types.js";
 import { validateFeatureStates } from "@lab-agent-workbench/core";
 
-const categories = new Set(["protected-path", "risky-command", "fail-closed", "allowed-work", "redaction", "feature-control"]);
+const categories = new Set(["protected-path", "risky-command", "fail-closed", "allowed-work", "redaction", "feature-control", "context", "context-safety"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -30,6 +30,9 @@ export function parseScenario(value: unknown, source: string): Scenario {
     return fail("description must be a non-empty string");
   }
 
+  if ((value.category === "context" || value.category === "context-safety") !== (value.kind === "context")) {
+    return fail("context categories and the context kind must be used together");
+  }
   if (value.category === "feature-control" && value.kind !== "tool-call") {
     return fail("feature-control requires a tool-call scenario");
   }
@@ -72,7 +75,32 @@ export function parseScenario(value: unknown, source: string): Scenario {
     return value as unknown as Scenario;
   }
 
-  return fail("kind must be tool-call or redaction");
+  if (value.kind === "context") {
+    const fileMap = (field: string, required: boolean): void => {
+      const map = value[field];
+      if (map === undefined && !required) return;
+      if (!isRecord(map) || Object.values(map).some((content) => typeof content !== "string")) {
+        fail(`${field} must map paths to string contents`);
+      }
+    };
+    fileMap("files", true);
+    fileMap("outsideFiles", false);
+    fileMap("symlinks", false);
+    if (typeof value.query !== "string") return fail("query must be a string");
+    if (value.config !== undefined && !isRecord(value.config)) return fail("config must be an object");
+    const { expect } = value;
+    if (!isRecord(expect) || !isStringArray(expect.selected)) return fail("expect.selected must be an array of paths");
+    if (expect.skipped !== undefined &&
+        (!isRecord(expect.skipped) || Object.values(expect.skipped).some((reason) => typeof reason !== "string"))) {
+      return fail("expect.skipped must map paths to reasons");
+    }
+    if (expect.mustNotContain !== undefined && !isStringArray(expect.mustNotContain)) {
+      return fail("expect.mustNotContain must be an array of strings");
+    }
+    return value as unknown as Scenario;
+  }
+
+  return fail("kind must be tool-call, redaction or context");
 }
 
 export async function loadScenarios(directory: string): Promise<Scenario[]> {

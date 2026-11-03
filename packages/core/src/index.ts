@@ -1,4 +1,5 @@
 export * from "./config.js";
+export * from "./context/index.js";
 export * from "./features.js";
 export * from "./loader.js";
 export * from "./policy.js";

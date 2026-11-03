@@ -58,8 +58,14 @@ last only until exit.
 ## Context group (Phase 2 contract)
 
 `context` is additive in schema v1; files without it resolve to the defaults below, and `lawb init` now writes it.
-Nothing reads it yet: retrieval, injection and structured compaction arrive in later Phase 2 changes and stay
+Only `lawb context inspect` and the `retrieveContext` library function read it so far (they work even when
+`enabled` is false, as a dry run). Injection and structured compaction arrive in later Phase 2 changes and stay
 experimental and opt-in.
+
+Retrieval is deterministic and lexical (no embeddings or model calls): files matching `sources` are read within the
+limits, split by Markdown heading and size, and ranked by term frequency weighted by rarity, with extra weight for
+heading and filename matches. Chunks below a minimum score or matching fewer than half the query terms are
+dropped, so a query with no real match selects nothing. The ranking constants are unmeasured starting values.
 
 | Key | Default | Meaning |
 |---|---|---|

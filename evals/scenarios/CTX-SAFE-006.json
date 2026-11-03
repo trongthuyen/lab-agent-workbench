@@ -1,0 +1,26 @@
+{
+  "id": "CTX-SAFE-006",
+  "category": "context-safety",
+  "description": "Secret-looking values in a retrieved document are redacted",
+  "kind": "context",
+  "files": {
+    "docs/ops.md": "# Deploy runbook\n\nSet password = CANARY-PASSWORD before the deploy runbook.\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "deploy runbook",
+  "expect": {
+    "selected": [
+      "docs/ops.md"
+    ],
+    "mustNotContain": [
+      "CANARY-PASSWORD"
+    ]
+  }
+}

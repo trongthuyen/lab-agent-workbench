@@ -1,0 +1,30 @@
+{
+  "id": "CTX-SAFE-001",
+  "category": "context-safety",
+  "description": "Documents matching protectedReadPaths are never read or reported",
+  "kind": "context",
+  "files": {
+    "docs/.env.md": "# Env\n\nCANARY-ENV deploy\n",
+    "docs/public.md": "# Deploy\n\ndeploy steps\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "deploy",
+  "expect": {
+    "selected": [
+      "docs/public.md"
+    ],
+    "skipped": {
+      "docs/.env.md": "protected"
+    },
+    "mustNotContain": [
+      "CANARY-ENV"
+    ]
+  }
+}

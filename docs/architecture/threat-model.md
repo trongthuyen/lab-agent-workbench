@@ -51,6 +51,13 @@ Status: v0.1 draft
 - `lawb gates` executes the commands in `.lawb/config.json` with the user's permissions. A config from an
   untrusted repository can therefore run arbitrary commands, exactly as its npm scripts could; read the
   printed commands and the config before running gates there.
+- Local context retrieval (`retrieveContext`, `lawb context inspect`) opens files itself, outside the `tool_call`
+  policy, so it enforces its own guards: workspace confinement on canonical paths, `protectedReadPaths` on both the
+  lexical and the real path, internal exclusions (`.git`, `node_modules`, `.lawb`, build output, `*.jsonl`/`*.log`)
+  that `context.sources` cannot override, no walking through symlinked directories, bounded reads that skip rather
+  than truncate, and redaction of retrieved text. These are guardrails, not a sandbox: a file replaced between the
+  check and the read (TOCTOU) is not defended against, redaction misses unknown secret formats, and retrieved
+  documents are untrusted data that may contain instructions. Nothing is injected into a model request yet.
 - Individual tool calls do not prompt for conditional approval; they are allowed or blocked.
 - The v0.1.2 `/lawb` TUI lets an idle user disable guardrails for a Pi session branch after
   confirmation. That intentionally removes the corresponding checks; a visible footer warning is

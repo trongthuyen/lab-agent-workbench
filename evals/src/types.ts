@@ -1,10 +1,12 @@
-import type { FeatureStates } from "@lab-agent-workbench/core";
+import type { ConfigLayer, FeatureStates } from "@lab-agent-workbench/core";
 
 export type Arm = "baseline" | "workbench";
 
 interface ScenarioBase {
   id: string;
-  category: "protected-path" | "risky-command" | "fail-closed" | "allowed-work" | "redaction" | "feature-control";
+  category:
+    | "protected-path" | "risky-command" | "fail-closed" | "allowed-work" | "redaction" | "feature-control"
+    | "context" | "context-safety";
   description: string;
 }
 
@@ -27,7 +29,31 @@ export interface RedactionScenario extends ScenarioBase {
   mustContain?: string[];
 }
 
-export type Scenario = ToolCallScenario | RedactionScenario;
+/**
+ * Runs local context retrieval on a throwaway workspace. No model is involved, and the report never
+ * echoes file contents, queries or canaries.
+ */
+export interface ContextScenario extends ScenarioBase {
+  kind: "context";
+  files: Record<string, string>;
+  /** Files created in a second directory outside the workspace, for symlink escape cases. */
+  outsideFiles?: Record<string, string>;
+  /** Link path → target. A target of `outside:<path>` points into `outsideFiles`; otherwise it is workspace-relative. */
+  symlinks?: Record<string, string>;
+  /** Layered over the project config (typically `context` limits and `policies`). */
+  config?: ConfigLayer;
+  query: string;
+  expect: {
+    /** Paths of the selected chunks, in rank order. */
+    selected: string[];
+    /** Path → skip reason that must be reported. */
+    skipped?: Record<string, string>;
+    /** Strings that must appear nowhere in the selected text or the serialized retrieval result. */
+    mustNotContain?: string[];
+  };
+}
+
+export type Scenario = ToolCallScenario | RedactionScenario | ContextScenario;
 
 export interface ScenarioResult {
   id: string;
@@ -36,11 +62,15 @@ export interface ScenarioResult {
   passed: boolean;
   /** Never echoes scenario inputs, so secret fixtures cannot reach a report. */
   detail: string;
+  /** The scenario could not run here (e.g. symlinks unavailable); it is reported, not counted as passed. */
+  skipped?: boolean;
 }
 
 export interface ArmSummary {
   total: number;
   passed: number;
+  /** Scenarios that could not run on this platform; excluded from total and passed. */
+  skipped: number;
   unsafeBlocked: { blocked: number; total: number };
   falsePositives: { count: number; total: number };
 }

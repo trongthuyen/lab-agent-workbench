@@ -1,10 +1,18 @@
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { evaluateToolCall, redact, resolveFeatureConfig, type WorkbenchConfig } from "@lab-agent-workbench/core";
+import { dirname, isAbsolute, join, resolve } from "node:path";
+import {
+  evaluateToolCall,
+  redact,
+  resolveConfig,
+  resolveFeatureConfig,
+  retrieveContext,
+  type WorkbenchConfig
+} from "@lab-agent-workbench/core";
 import type {
   Arm,
   ArmSummary,
+  ContextScenario,
   EvaluationReport,
   Scenario,
   ScenarioResult,
@@ -76,15 +84,69 @@ function runWorkbenchRedaction(scenario: Extract<Scenario, { kind: "redaction" }
   };
 }
 
+function writeFiles(directory: string, files: Record<string, string>): void {
+  for (const [path, content] of Object.entries(files)) {
+    mkdirSync(dirname(join(directory, path)), { recursive: true });
+    writeFileSync(join(directory, path), content, "utf8");
+  }
+}
+
+/** Local retrieval on a throwaway workspace; compares what was selected, skipped and leaked. */
+async function runWorkbenchContext(scenario: ContextScenario, config: WorkbenchConfig): Promise<ScenarioResult> {
+  const base = { id: scenario.id, arm: "workbench" as const, category: scenario.category };
+  const root = mkdtempSync(join(tmpdir(), "lawb-eval-ctx-"));
+  const outside = mkdtempSync(join(tmpdir(), "lawb-eval-out-"));
+  try {
+    writeFiles(root, scenario.files);
+    writeFiles(outside, scenario.outsideFiles ?? {});
+    for (const [link, target] of Object.entries(scenario.symlinks ?? {})) {
+      const absoluteTarget = target.startsWith("outside:")
+        ? join(outside, target.slice("outside:".length))
+        : isAbsolute(target) ? target : resolve(root, dirname(link), target);
+      mkdirSync(dirname(join(root, link)), { recursive: true });
+      try {
+        symlinkSync(absoluteTarget, join(root, link), target.endsWith("/") ? "junction" : "file");
+      } catch {
+        return { ...base, passed: false, skipped: true, detail: "skipped: symlinks cannot be created on this platform" };
+      }
+    }
+
+    const effective = scenario.config ? resolveConfig(config, scenario.config) : config;
+    const result = await retrieveContext({ root, query: scenario.query, config: effective });
+    const selected = result.selected.map((chunk) => chunk.path);
+    const problems: string[] = [];
+    if (JSON.stringify(selected) !== JSON.stringify(scenario.expect.selected)) {
+      problems.push(`selected ${selected.length} chunk(s), expected ${scenario.expect.selected.length} with the expected sources`);
+    }
+    const skipped = new Map(result.skipped.map((entry) => [entry.path, entry.reason]));
+    for (const [path, reason] of Object.entries(scenario.expect.skipped ?? {})) {
+      if (skipped.get(path) !== reason) problems.push(`a source was not skipped as ${reason}`);
+    }
+    const output = JSON.stringify(result);
+    const leaked = (scenario.expect.mustNotContain ?? []).filter((text) => output.includes(text)).length;
+    if (leaked > 0) problems.push(`${leaked} canary string(s) reached the retrieval result`);
+    return {
+      ...base,
+      passed: problems.length === 0,
+      detail: problems.length === 0 ? `selected ${selected.length} chunk(s) as expected` : problems.join("; ")
+    };
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+    rmSync(outside, { recursive: true, force: true });
+  }
+}
+
 function summarize(results: ScenarioResult[], scenarios: readonly Scenario[]): ArmSummary {
   const byId = new Map(scenarios.map((scenario) => [scenario.id, scenario]));
+  const counted = results.filter((result) => result.skipped !== true);
   const summary: ArmSummary = {
-    total: results.length,
-    passed: results.filter((result) => result.passed).length,
+    total: counted.length,
+    passed: counted.filter((result) => result.passed).length,
+    skipped: results.length - counted.length,
     unsafeBlocked: { blocked: 0, total: 0 },
     falsePositives: { count: 0, total: 0 }
   };
-  for (const result of results) {
+  for (const result of counted) {
     const scenario = byId.get(result.id);
     if (scenario?.kind !== "tool-call" || scenario.category === "feature-control") {
       continue;
@@ -111,12 +173,14 @@ export interface EvaluationOptions {
   repositoryCommit: string;
 }
 
-export function runEvaluation(options: EvaluationOptions): EvaluationReport {
+export async function runEvaluation(options: EvaluationOptions): Promise<EvaluationReport> {
   const { scenarios, config, cwd } = options;
   const results: ScenarioResult[] = [];
   for (const scenario of scenarios) {
     if (scenario.kind === "tool-call") {
       results.push(runBaselineToolCall(scenario), runWorkbenchToolCall(scenario, cwd, config));
+    } else if (scenario.kind === "context") {
+      results.push(await runWorkbenchContext(scenario, config));
     } else {
       results.push(runWorkbenchRedaction(scenario, config));
     }
