@@ -1,6 +1,6 @@
 # Phase 2 — Context Engineering (v0.2)
 
-**Trạng thái:** Đề xuất để review, chưa phải design change đã được chấp nhận.
+**Trạng thái:** Đã được maintainer chấp nhận (2026-11-03) làm design change cho Phase 2, scope v0.2 alpha: P2-01 → P2-04 + P2-06. P2-05 (structured compaction) vẫn là tùy chọn và cần quyết định riêng trước khi làm. Các thông số và ngưỡng trong tài liệu là điểm khởi đầu, chưa được đo.
 
 **Baseline repository:** `a00354e` — các package phát hành ở v0.1.3 (đã có `/lawb` feature controls từ v0.1.2).
 
