@@ -3,6 +3,14 @@
 Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workbench/pi-extension` and
 `@lab-agent-workbench/lawb` always share a version, because the other two pin `core` exactly.
 
+## 0.1.3 (2026-11-03)
+
+### Fixed
+
+- `/lawb` failed with "LAWb features were not applied" when the extension was installed from npm:
+  `@earendil-works/pi-tui`, imported by the menu, was only a peer dependency and was not installed.
+  It is now a regular dependency. A menu that cannot load reports a specific error instead.
+
 ## 0.1.2 (2026-11-01)
 
 ### Added

@@ -10,6 +10,8 @@ import {
   type WorkbenchConfig
 } from "@lab-agent-workbench/core";
 
+import type { showFeatureMenu as showMenuType } from "./feature-menu.js";
+
 export const featureStateEntry = "lawb-features";
 
 interface SavedState {
@@ -94,7 +96,14 @@ export function registerFeatureControls(
       try {
         const current = await stateFor(ctx.cwd);
         await configFor(ctx.cwd);
-        const { showFeatureMenu } = await import("./feature-menu.js");
+        let showFeatureMenu: typeof showMenuType;
+        try {
+          ({ showFeatureMenu } = await import("./feature-menu.js"));
+        } catch {
+          // Typically a missing @earendil-works/pi-tui in the install; say so instead of blaming config.
+          ctx.ui.notify("LAWb feature menu could not load its UI dependency (@earendil-works/pi-tui). Reinstall the extension, then /reload.", "error");
+          return;
+        }
         const selection = await showFeatureMenu(ctx, current);
         if (!selection) return;
         const next = validateFeatureStates(selection);

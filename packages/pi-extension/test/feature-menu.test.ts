@@ -41,3 +41,11 @@ test("feature menu supports keyboard navigation and stays within terminal width 
   assert.equal(result?.readProtection, false);
   assert.equal(result?.writeProtection, true);
 });
+
+test("pi-tui, imported lazily at runtime by the menu, is a regular dependency (not peer-only)", async () => {
+  const { readFile } = await import("node:fs/promises");
+  const manifest = JSON.parse(await readFile(new URL("../../package.json", import.meta.url), "utf8")) as {
+    dependencies?: Record<string, string>;
+  };
+  assert.ok(manifest.dependencies?.["@earendil-works/pi-tui"], "installed packages must ship pi-tui; the host alias does not cover nested imports");
+});
