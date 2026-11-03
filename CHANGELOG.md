@@ -3,6 +3,22 @@
 Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workbench/pi-extension` and
 `@lab-agent-workbench/lawb` always share a version, because the other two pin `core` exactly.
 
+## Unreleased
+
+### Added
+
+- `context` configuration group (schema v1, additive): `enabled` (default `false`), `sources`, token/byte/scan
+  limits and `compaction.strategy`. Validated and fail-closed; nothing reads it yet (Phase 2, P2-01).
+- `loadProjectConfig` / `resolveProjectConfig` in core: one loader for the CLI and the Pi extension that applies
+  Base → named Technology Profile → project file. Partial files now inherit their profile; files written by
+  `lawb init` resolve as before and unknown profile names are still accepted.
+- `npm run smoke:pack` (also in CI) installs the packed tarballs into an empty directory and drives `/lawb`
+  there, so a runtime import missing from `dependencies` fails before release.
+
+### Changed
+
+- `lawb init` and the sample fixture config now include the `context` block.
+
 ## 0.1.3 (2026-11-03)
 
 ### Fixed

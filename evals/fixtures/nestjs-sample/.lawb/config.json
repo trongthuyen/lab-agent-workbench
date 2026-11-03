@@ -43,5 +43,22 @@
       "npm run typecheck",
       "npm test"
     ]
+  },
+  "context": {
+    "enabled": false,
+    "sources": [
+      "README.md",
+      "docs/**/*.md"
+    ],
+    "maxInjectedTokens": 4000,
+    "maxInjectedBytes": 16384,
+    "maxChunks": 5,
+    "maxChunkTokens": 800,
+    "maxFileBytes": 262144,
+    "maxFilesScanned": 200,
+    "maxBytesScanned": 2097152,
+    "compaction": {
+      "strategy": "native"
+    }
   }
 }

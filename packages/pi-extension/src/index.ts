@@ -1,25 +1,18 @@
-import { appendFile, mkdir, readFile } from "node:fs/promises";
+import { appendFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { registerFeatureControls } from "./feature-controls.js";
 import {
   evaluateToolCall,
+  loadProjectConfig,
   redact,
-  resolveConfig,
-  type ConfigLayer,
-  type WorkbenchConfig
+  type LoadedConfig
 } from "@lab-agent-workbench/core";
 
 interface PendingCall {
   args: unknown;
   startedAt: string;
-}
-
-interface LoadedConfig {
-  config: WorkbenchConfig;
-  /** True when the project has no .lawb/config.json and the built-in defaults apply. */
-  defaulted: boolean;
 }
 
 export interface ExtensionOptions {
@@ -29,13 +22,8 @@ export interface ExtensionOptions {
 
 async function loadConfig(cwd: string): Promise<LoadedConfig> {
   try {
-    const source = await readFile(resolve(cwd, ".lawb", "config.json"), "utf8");
-    return { config: resolveConfig(JSON.parse(source) as ConfigLayer), defaulted: false };
+    return await loadProjectConfig(cwd);
   } catch (error) {
-    const code = error instanceof Error && "code" in error ? error.code : undefined;
-    if (code === "ENOENT") {
-      return { config: resolveConfig(), defaulted: true };
-    }
     // Pi can report hook errors to the terminal/model. Never echo JSON snippets or arbitrary keys.
     if (error instanceof SyntaxError) {
       throw new SyntaxError("Invalid JSON in .lawb/config.json; fix the file and /reload.");

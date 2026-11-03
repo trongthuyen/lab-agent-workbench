@@ -27,6 +27,8 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: npm run eval
+      - name: Packed install smoke test
+        run: npm run smoke:pack
       - name: Sample project quality gates
         run: |
           npm ci --prefix evals/fixtures/nestjs-sample

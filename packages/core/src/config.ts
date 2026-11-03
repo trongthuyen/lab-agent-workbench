@@ -1,3 +1,4 @@
+import { getProfile, profiles } from "./profiles.js";
 import type { ConfigLayer, WorkbenchConfig } from "./types.js";
 
 export const defaultConfig: WorkbenchConfig = {
@@ -41,15 +42,36 @@ export const defaultConfig: WorkbenchConfig = {
   },
   qualityGates: {
     commands: []
+  },
+  context: {
+    enabled: false,
+    sources: ["README.md", "docs/**/*.md"],
+    maxInjectedTokens: 4000,
+    maxInjectedBytes: 16384,
+    maxChunks: 5,
+    maxChunkTokens: 800,
+    maxFileBytes: 262144,
+    maxFilesScanned: 200,
+    maxBytesScanned: 2097152,
+    compaction: { strategy: "native" }
   }
 };
 
 const allowedKeys = {
-  root: new Set(["version", "profile", "policies", "telemetry", "qualityGates"]),
+  root: new Set(["version", "profile", "policies", "telemetry", "qualityGates", "context"]),
   policies: new Set(["allowOutsideWorkspace", "protectedPaths", "protectedReadPaths", "riskyCommandPatterns"]),
   telemetry: new Set(["enabled", "path", "redactPatterns"]),
-  qualityGates: new Set(["commands"])
+  qualityGates: new Set(["commands"]),
+  context: new Set([
+    "enabled", "sources", "maxInjectedTokens", "maxInjectedBytes", "maxChunks", "maxChunkTokens",
+    "maxFileBytes", "maxFilesScanned", "maxBytesScanned", "compaction"
+  ]),
+  compaction: new Set(["strategy"])
 };
+const contextLimits = [
+  "maxInjectedTokens", "maxInjectedBytes", "maxChunks", "maxChunkTokens",
+  "maxFileBytes", "maxFilesScanned", "maxBytesScanned"
+] as const;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -115,6 +137,8 @@ export function validateConfig(value: unknown): WorkbenchConfig {
   assertKnownKeys(value.qualityGates, allowedKeys.qualityGates, "qualityGates.");
   assertStringArray(value.qualityGates.commands, "qualityGates.commands");
 
+  validateContext(value.context);
+
   for (const [index, pattern] of value.policies.riskyCommandPatterns.entries()) {
     assertValidPattern(pattern, `policies.riskyCommandPatterns[${index}]`);
   }
@@ -123,6 +147,44 @@ export function validateConfig(value: unknown): WorkbenchConfig {
   }
 
   return value as unknown as WorkbenchConfig;
+}
+
+function validateContext(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error("context must be an object");
+  }
+  assertKnownKeys(value, allowedKeys.context, "context.");
+  if (typeof value.enabled !== "boolean") {
+    throw new Error("context.enabled must be a boolean");
+  }
+  assertStringArray(value.sources, "context.sources");
+  for (const [index, source] of value.sources.entries()) {
+    // Contract-level check only; the reader still canonicalizes paths before opening anything.
+    const segments = source.split(/[\\/]/);
+    if (source.trim() === "" || source.startsWith("!") || /^(?:[A-Za-z]:|[\\/])/.test(source) || segments.includes("..")) {
+      throw new Error(`context.sources[${index}] must be a workspace-relative glob without ".." or negation`);
+    }
+  }
+  for (const key of contextLimits) {
+    const limit = value[key];
+    if (typeof limit !== "number" || !Number.isSafeInteger(limit) || limit < 1) {
+      throw new Error(`context.${key} must be a positive integer`);
+    }
+  }
+  const limits = value as Record<(typeof contextLimits)[number], number>;
+  if (limits.maxChunkTokens > limits.maxInjectedTokens) {
+    throw new Error("context.maxChunkTokens must not exceed context.maxInjectedTokens");
+  }
+  if (limits.maxFileBytes > limits.maxBytesScanned) {
+    throw new Error("context.maxFileBytes must not exceed context.maxBytesScanned");
+  }
+  if (!isRecord(value.compaction)) {
+    throw new Error("context.compaction must be an object");
+  }
+  assertKnownKeys(value.compaction, allowedKeys.compaction, "context.compaction.");
+  if (value.compaction.strategy !== "native" && value.compaction.strategy !== "structured") {
+    throw new Error('context.compaction.strategy must be "native" or "structured"');
+  }
 }
 
 function assertValidPattern(pattern: string, path: string): void {
@@ -165,4 +227,15 @@ export function resolveConfig(...layers: ConfigLayer[]): WorkbenchConfig {
     defaultConfig
   );
   return validateConfig(merged);
+}
+
+/**
+ * Applies Base → Technology Profile → Project Override for one project file. The profile layer is the
+ * one the file names. An unknown profile name adds no layer: such files were accepted before profiles
+ * were applied at load time, and rejecting them here would break existing projects.
+ */
+export function resolveProjectConfig(projectLayer: ConfigLayer): WorkbenchConfig {
+  const name = isRecord(projectLayer) ? projectLayer.profile : undefined;
+  const profileLayer = typeof name === "string" && Object.hasOwn(profiles, name) ? getProfile(name) : {};
+  return resolveConfig(profileLayer, projectLayer);
 }
