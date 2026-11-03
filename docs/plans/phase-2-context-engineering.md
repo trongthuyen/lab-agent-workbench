@@ -1,8 +1,10 @@
 # Phase 2 — Context Engineering (v0.2)
 
-**Trạng thái:** Đề xuất để review, chưa phải design change đã được chấp nhận.
+**Trạng thái:** Đã được maintainer chấp nhận (2026-11-03) làm design change cho Phase 2, scope v0.2 alpha: P2-01 → P2-04 + P2-06. P2-05 (structured compaction) vẫn là tùy chọn và cần quyết định riêng trước khi làm. Các thông số và ngưỡng trong tài liệu là điểm khởi đầu, chưa được đo.
 
-**Baseline repository:** `78fe611` — các package phát hành ở v0.1.1.
+**Baseline repository:** `a00354e` — các package phát hành ở v0.1.3 (đã có `/lawb` feature controls từ v0.1.2).
+
+**Cập nhật gần nhất:** bỏ kiểm định benchmark live khỏi Phase 2 theo quyết định của maintainer (chưa muốn làm). Hệ quả: mọi tính năng context là **opt-in/experimental**, không bật mặc định và không tuyên bố hiệu quả; xem mục 3 và 7.
 
 **Phạm vi:** Pi + NestJS; không thay runtime, không thêm technology profile.
 
@@ -12,14 +14,13 @@ Phase 1 đã có nền tảng đủ để bắt đầu Phase 2: config, policy, 
 
 Ưu tiên triển khai:
 
-1. Chốt config/session lifecycle và dựng phép đo context.
+1. Chốt config/session lifecycle, mở rộng cơ chế `/lawb` hiện có thay vì dựng hệ override thứ hai.
 2. Retrieval cục bộ có policy boundary.
 3. Dynamic injection có budget và không lặp.
-4. Session state dựa trên Pi, không tạo memory store riêng.
-5. Compaction có cấu trúc, giữ recent context và fallback native.
-6. Benchmark, dogfood và quyết định feature nào đủ bằng chứng để bật mặc định.
+4. Structured compaction (tùy chọn, làm cuối, chỉ ở mức experimental).
+5. Dogfood thủ công và tài liệu, kèm smoke test đóng gói.
 
-**Không đặt mục tiêu “hỗ trợ large codebase” chỉ bằng demo:** phải có fixture nhiều module/tài liệu gây nhiễu và task nhiều turn, khác bộ task nhỏ hiện tại.
+**Không có benchmark live trong Phase 2.** Vì vậy không có bằng chứng đo được rằng context engineering cải thiện kết quả. Phase 2 chỉ chứng minh được tính **đúng đắn và an toàn** bằng test và scenario deterministic; "có giúp ích không" được ghi rõ là chưa kiểm chứng.
 
 ## 2. Những gì đã xác minh
 
@@ -27,16 +28,14 @@ Phase 1 đã có nền tảng đủ để bắt đầu Phase 2: config, policy, 
 |---|---|
 | Config | `core/src/config.ts` merge object đệ quy, replace array/scalar, reject unknown key. `resolveConfig()` nhận nhiều layer nhưng runtime/CLI đọc project file trực tiếp trên base; chưa tự áp dụng profile từ tên trong file. |
 | Profile | `core/src/profiles.ts` chỉ có base và NestJS. `lawb init` materialize config đã resolve nên cách dùng thông thường vẫn nhận NestJS gates. |
-| Runtime | `pi-extension/src/index.ts` mới đăng ký `tool_call`, `tool_execution_start/end`; chưa có context/session/compaction hooks. Config cache bằng `Map<cwd, Promise<LoadedConfig>>`. |
-| Session override | Có trong contract nhưng được ghi rõ là chưa nối runtime tại `docs/architecture/configuration.md`. |
+| Runtime | `pi-extension/src/index.ts` đăng ký `tool_call`, `tool_execution_start/end`; chưa có `context`/compaction hooks. Config cache bằng `Map<cwd, Promise<LoadedConfig>>`, được xóa khi session chuyển. |
+| Session override | **Đã có từ v0.1.2** cho 4 switch (`featureCatalog` trong `core/src/features.ts`): `pi-extension/src/feature-controls.ts` lưu bằng `appendEntry`, restore từ `getBranch()` ở `session_start`/`session_tree`, dọn ở `session_shutdown`, chỉ đổi khi agent idle, không có tool cho model. Context override phải đi qua cơ chế này. |
 | Telemetry | JSONL chứa redacted args và thời gian tool, không ghi tool results; chưa có session correlation, context budget hoặc compaction metrics. |
-| Quality gates | Đã có `lawb gates` và tests; đoạn “nothing runs it yet” trong `evals/README.md` đã lỗi thời. |
-| Replay | Chạy lại `npm run eval`: Workbench pass 53/53, block 30/30 unsafe cases, 0/20 false positives. Đây là fixture coverage, không phải bảo đảm mọi hành vi đều an toàn. |
-| Checks | Chạy lại `npm run check`: lint/typecheck pass, 78 tests pass. `npm run eval` cũng build thành công. Môi trường đọc project: Node 24.8.0, npm 11.6.0; CI dùng Node 22.19.0. |
-| Live benchmark cũ | EXP-002b báo cáo 35/35 functional runs pass, 0 violations; chỉ chạy lại Workbench arm. T10 vẫn 0/5 hoàn thành; functional tasks có ceiling effect. Chưa chạy lại live benchmark trong lần review này. |
-| Verifier preflight | `npm run bench -- validate` hiện fail 7 reference solutions. Fixture chưa có dependencies; chạy typecheck trực tiếp báo thiếu `@nestjs/common`, `@nestjs/core`. Cần cài fixture rồi validate lại trước khi kết luận verifier lỗi. |
-| Harness | `evals/src/bench/run.ts` hardcode model/thinking, chạy `-p --no-session` với một prompt. Chưa đo multi-turn, resume hay compaction. |
-| Pi API | Đã đối chiếu docs native và declarations của Pi 1.4.0 trong `node_modules`: có `context`, `before_agent_start`, session hooks, `getContextUsage()`, `compact()`, `appendEntry()`. Peer/dev dependency hiện là `*`. |
+| Quality gates | Đã có `lawb gates`; đoạn “nothing runs it yet” trong `evals/README.md` đã lỗi thời. |
+| Replay / checks | `npm run check` và `npm run eval` là baseline. Con số cụ thể phải chạy lại ở đầu P2-01, không trích số cũ. Replay là fixture coverage, không phải bảo đảm mọi hành vi an toàn. |
+| Packaging | v0.1.3 sửa lỗi `/lawb` hỏng khi cài từ npm: `@earendil-works/pi-tui` được import lúc runtime nhưng chỉ là peer dependency. Unit test trong repo không bắt được lỗi này; chỉ cài tarball vào thư mục sạch mới bắt được. |
+| Pi API | Đã đối chiếu declarations Pi 1.4.0: có hooks `context`, `before_agent_start`, `session_before_compact`, `getContextUsage()`, `compact()`, `appendEntry()`; root export có `generateSummary`, `generateSummaryWithUsage`, `findCutPoint`, `estimateTokens`, `shouldCompact`. Peer/dev dependency đã là `^1.4.0`. |
+| Live benchmark | EXP-002/002b là bằng chứng cũ (ceiling effect, T10 0/5). **Không chạy lại và không mở rộng trong Phase 2.** Harness `evals/src/bench` giữ nguyên, không sửa. |
 
 Các kết luận về live-agent là từ report đã commit, không phải kết quả thực nghiệm mới.
 
@@ -60,6 +59,7 @@ Các kết luận về live-agent là từ report đã commit, không phải k�
 - Viết lại session browser, session storage, agent loop hay model routing của Pi.
 - Tổng quát hóa shell policy thành sandbox. Các giới hạn FC-101/102 vẫn phải được công bố.
 - Tự động xóa/summarize mọi tool result để tiết kiệm token; đây là tối ưu rủi ro, chỉ xem xét sau khi có phép đo.
+- **Benchmark live, fixture NestJS mở rộng, harness multi-turn, EXP-003/EXP-004 và verifier preflight:** hoãn, chưa lên lịch. Không dùng kết quả cũ để tuyên bố lợi ích của context features.
 
 **Project knowledge ở đây là file có sẵn trong repository**, không phải tri thức agent tự ghi nhớ từ các phiên trước.
 
@@ -67,7 +67,7 @@ Các kết luận về live-agent là từ report đã commit, không phải k�
 
 ### 4.1. Giữ core nhỏ, adapter Pi mỏng
 
-Không thêm package ở bước đầu. Tách logic trong các package hiện tại:
+Không thêm package ở bước đầu. Branch-scoped override **không** có `session.ts` mới: thêm nhóm context vào `core/src/features.ts` và `pi-extension/src/feature-controls.ts`. Tách logic trong các package hiện tại:
 
 ```text
 packages/core/src/
@@ -80,7 +80,6 @@ packages/core/src/
 packages/pi-extension/src/
   index.ts                  # composition, giữ policy boundary
   context.ts                # context selection/injection adapter
-  session.ts                # branch-scoped overrides và lifecycle
   compaction.ts             # native Pi integration + fallback
   telemetry.ts              # metadata-only context events
 packages/cli/src/
@@ -95,12 +94,12 @@ Tên file là định hướng, không phải yêu cầu tạo abstraction trư�
 - Project cũ đã materialize vẫn được giữ nguyên: array trong project file tiếp tục thắng profile/defaults. Không dùng `init --force` như migration tự động.
 - Thêm nhóm `context` theo cách additive trong schema v1 nếu không đổi nghĩa key cũ; default mới được bổ sung khi resolve. Nếu cần đổi nghĩa không tương thích, phải có version mới và migration riêng.
 - Trong giai đoạn thử nghiệm, `context.enabled` mặc định `false`. Init config cũ vẫn chạy policy/telemetry như trước.
-- Session override v0.2 chỉ cho phép key context đã khai báo; không cung cấp shortcut để giảm policy bảo vệ hoặc đổi telemetry destination.
+- Session override v0.2 mở rộng `FeatureStates`/`featureCatalog` hiện có (ví dụ switch `contextInjection`, `structuredCompaction`); entry `lawb-features` được tăng version có migration rõ ràng, entry v1 cũ vẫn đọc được. Không cung cấp shortcut để giảm policy bảo vệ hoặc đổi telemetry destination.
 - Override chỉ do thao tác explicit của người dùng/flags được validate; không có tool cho model tự sửa override.
-- Cập nhật config theo snapshot ở ranh giới user task. Tool calls đang chạy dùng snapshot nhất quán; `/reload` và session replacement phải xóa cache cũ.
+- Cập nhật config theo snapshot ở ranh giới user task. Tool calls đang chạy dùng snapshot nhất quán; `/reload` và session replacement xóa cache cũ (đã có từ v0.1.2, giữ nguyên).
 - Invalid project config tiếp tục fail closed tại tool policy boundary; retrieval lỗi thì bỏ phần context bổ sung và báo trạng thái, không fallback sang reader không được bảo vệ.
 
-Thông số khởi điểm để benchmark, chưa phải tuning đã chứng minh:
+Thông số khởi điểm, chưa được tuning hay đo thực nghiệm (không có benchmark trong Phase 2):
 
 | Tham số | Giá trị đề xuất |
 |---|---:|
@@ -110,7 +109,7 @@ Thông số khởi điểm để benchmark, chưa phải tuning đã chứng min
 | Sources mặc định khi bật context | docs Markdown trong workspace và metadata project được allowlist; không auto-scan source code |
 | Compaction strategy | `native` mặc định; `structured` opt-in |
 
-Chốt tên key và cross-field validation trong PR đầu tiên, tránh hai hệ setting cùng sở hữu reserve/keepRecent của Pi.
+Chốt tên key và cross-field validation trong PR đầu tiên, tránh hai hệ setting cùng sở hữu reserve/keepRecent của Pi. Vì không đo được, giữ giá trị bảo thủ và để người dùng chỉnh qua config.
 
 ### 4.3. Retrieval trước, injection sau
 
@@ -124,7 +123,7 @@ Luồng: **discover allowlisted sources → kiểm tra quyền → đọc có gi
 - Chỉ thay/remove message thuộc Workbench; không đụng prompt, tool schemas, user message hay nội dung của extension khác.
 - Không tự rút bớt context gốc của Pi để cố đạt budget. Nếu hết dung lượng, giảm/bỏ phần Workbench bổ sung.
 - Refresh khi source đổi hoặc bắt đầu task mới; context hook phải re-check quyền/current fingerprint trước khi tái dùng cache. Không cần background watcher ở MVP.
-- CLI đề xuất: `lawb context inspect --query "..."` hiển thị source, range, score, estimate và lý do bỏ qua; không dump snippet/raw query vào telemetry. Trong Pi có `/lawb-context` để xem cùng metadata và trạng thái budget.
+- CLI đề xuất: `lawb context inspect --query "..."` hiển thị source, range, score, estimate và lý do bỏ qua; không dump snippet/raw query vào telemetry. Trong Pi, hiển thị cùng metadata và trạng thái budget qua `/lawb` (một mục xem trạng thái), không thêm slash command thứ hai trừ khi menu hiện có không đủ.
 
 ### 4.4. Reader mới phải tự có policy boundary
 
@@ -142,12 +141,11 @@ Luồng: **discover allowlisted sources → kiểm tra quyền → đọc có gi
 ### 4.5. Session management = dùng Pi, không thay Pi
 
 - Pi tiếp tục sở hữu `/resume`, `/new`, `/fork`, `/tree`, session JSONL và session IDs.
-- Workbench lưu entry có version qua `appendEntry()` cho context override và metadata cần khôi phục; không lưu thêm transcript hay tool output.
-- Restore từ **active branch** (`getBranch()`), không replay mọi entry của mọi nhánh qua `getEntries()`.
-- `/new` reset override; `/resume` restore phiên đích; `/fork` kế thừa state tại fork point; `/tree` reconstruct tại leaf mới; `/reload` restore cùng branch.
-- Không kế thừa cache/override sang workspace khác. Cleanup pending calls, timers và state cũ ở shutdown; không giữ stale `ctx` sau session replacement.
+- Tái dùng `feature-controls.ts` (entry `lawb-features`, restore từ `getBranch()`, newest-entry-wins, cwd khớp mới áp dụng, compensation khi ghi lỗi). Không lưu thêm transcript hay tool output.
+- `/new` reset override; `/resume` restore phiên đích; `/fork` kế thừa state tại fork point; `/tree` reconstruct tại leaf mới; `/reload` restore cùng branch. Phần lớn đã có test từ v0.1.2; bổ sung test cho các key context mới.
+- Không kế thừa cache/override sang workspace khác. Cleanup pending calls và state cũ ở shutdown.
 - Entry hỏng/khác version: bỏ context override, về project context config an toàn và báo warning; tuyệt đối không làm giảm policy.
-- Lệnh đề xuất `/lawb-context set <key> <value>` và `/lawb-context reset`, chỉ khi agent idle; không tạo thêm session picker.
+- Thay đổi chỉ qua menu `/lawb` khi agent idle; không tạo thêm session picker hay lệnh riêng.
 
 ### 4.6. Token budget và compaction
 
@@ -155,31 +153,32 @@ Phân biệt hai phép đo: **budget phần injected context** và **context t�
 
 - Dùng `ctx.getContextUsage()` và context window của model; tokens `null`/usage chưa có phải là unknown, không coi là 0.
 - Budget packing dùng estimator nhất quán + hard UTF-8 byte cap. Chừa safety margin; model switch phải tính lại budget.
+- Structured compaction **không có bằng chứng lợi ích** vì không có benchmark; chỉ phát hành như experimental opt-in, hoặc hoãn hẳn nếu thời gian hạn chế.
 - v0.2 đầu tiên cảnh báo áp lực context, dựa vào auto-compaction native của Pi thay vì thêm scheduler cạnh tranh.
 - Structured strategy tích hợp `session_before_compact`, dùng preparation/cut point native. Giữ `firstKeptEntryId`, recent messages và pairing tool call/result.
 - Summary contract: goal, explicit constraints, decisions, completed/in-progress/blocked, next steps, source/file references; không ghi “tests passed” nếu chỉ có kế hoạch chạy tests.
 - Preserve previous summary và split-turn prefix; summary là trạng thái phiên, không phải nơi thay policy/config. Policy enforcement luôn nằm ngoài LLM context.
-- Ưu tiên helper compaction native để Pi tiếp tục quản lý model/auth/retry/usage; không thêm Anthropic SDK hay provider client riêng vào Workbench. Spike phải xác minh helper thực sự được public export ở Pi version hỗ trợ.
+- Ưu tiên helper compaction native để Pi tiếp tục quản lý model/auth/retry/usage; không thêm Anthropic SDK hay provider client riêng vào Workbench. Đã xác minh `generateSummary`/`generateSummaryWithUsage`/`findCutPoint` được export ở Pi 1.4.0; P2-05 chỉ cần pin range và có test tương thích.
 - Summary rỗng, malformed, bị cắt, lỗi model hoặc abort: không commit summary lỗi. Non-abort có thể fallback native một lần nếu còn khả năng; abort phải dừng, không âm thầm tạo lượt model khác.
 - Không chặn/cancel overflow compaction chỉ vì context feature đang lỗi. Không gọi `compact()` đệ quy từ chính before-compact handler.
 - Không log summary/tool results. Chỉ ghi trigger, strategy, duration, estimates, usage có sẵn, outcome và fallback reason enum.
 
 ## 5. Kế hoạch triển khai theo PR
 
-Ước lượng cho một người quen TypeScript/Pi; chưa tính thời gian chờ review và chi phí live runs.
+Ước lượng cho một người quen TypeScript/Pi; chưa tính thời gian chờ review.
 
 | PR | Nội dung | Điều kiện xong | Ước lượng |
 |---|---|---|---:|
-| P2-01 | Context RFC/config contract; shared profile-aware loader; pin/test Pi compatibility; sửa docs lệch; benchmark preflight | Config cũ chạy nguyên nghĩa; profile + project + context override precedence có tests; thiếu fixture deps fail sớm với hướng dẫn; chốt manifest EXP-003 trước tuning | 2–3 ngày |
+| P2-01 | Context config contract; shared profile-aware loader; pin/test Pi compatibility; sửa docs lệch; packaging smoke test | Config cũ chạy nguyên nghĩa; profile + project + context override precedence có tests; script cài tarball vào thư mục sạch và chạy `/lawb` handler | 2 ngày |
 | P2-02 | Secure local retrieval + CLI inspect | Deterministic ranking; citations đúng; protected/outside/symlink/junction/artifact sources không xuất hiện; size/scan limits và cancellation có tests/scenarios | 2–3 ngày |
 | P2-03 | Budget + dynamic injection | Feature opt-in; không inject lặp qua nhiều turn; source đổi được refresh; no-match/unknown-usage/model-switch hoạt động; không đụng context người khác | 2–3 ngày |
-| P2-04 | Pi branch-scoped session state + context commands | New/resume/fork/tree/reload/cross-workspace có lifecycle tests; context override không sửa policy; unknown entry version xử lý an toàn | 1–2 ngày |
-| P2-05 | Structured compaction + metadata telemetry | Native fallback; previous summary/split turn/cancel/length/error được kiểm thử; không phá tool pairing; telemetry không có content/secrets | 2–3 ngày |
-| P2-06 | Multi-turn benchmark, EXP-003/004 reports, dogfood + release docs | Verifiers validate trước live run; báo cáo đủ arms/repetitions/usage; đạt release gates bên dưới hoặc giữ feature experimental | 3–4 ngày |
+| P2-04 | Context switches trong `/lawb` + lifecycle | New/resume/fork/tree/reload/cross-workspace có test cho switch mới; không sửa policy; unknown entry version xử lý an toàn | 1–2 ngày |
+| P2-05 (tùy chọn) | Structured compaction + metadata telemetry | Native fallback; previous summary/split turn/cancel/length/error được kiểm thử; không phá tool pairing; telemetry không có content/secrets | 2–3 ngày |
+| P2-06 | Dogfood so sánh nhẹ bật/tắt context (mục 6.3), docs, changelog, threat model | Có bảng chi phí quan sát được theo 6.3; docs nói rõ feature experimental, số liệu chỉ là quan sát nhỏ, không phải benchmark | 1–2 ngày |
 
-**Tổng:** khoảng 12–18 ngày công, tương đương 3–4 tuần có review. Nếu cần scope nhỏ: giao P2-01 đến P2-04 thành v0.2 alpha, giữ compaction native; không tuyên bố đã hoàn thành toàn bộ Phase 2.
+**Tổng:** khoảng 8–12 ngày công không tính P2-05, 10–15 ngày nếu có. **Scope đề xuất cho v0.2 alpha: P2-01 → P2-04 + P2-06**; P2-05 chỉ làm nếu muốn và vẫn experimental.
 
-Dependency: `P2-01 → P2-02 → P2-03 → P2-04 → P2-05 → P2-06`. Harness/scenarios của P2-06 phải được dựng dần từ P2-01, không chờ viết feature xong mới tạo phép đo.
+Dependency: `P2-01 → P2-02 → P2-03 → P2-04 → (P2-05) → P2-06`.
 
 ## 6. Evaluation plan
 
@@ -197,43 +196,33 @@ Nhóm bắt buộc:
 
 Mỗi behavior change có unit test ở package sở hữu và eval scenario tương ứng. CI chạy Windows/macOS/Linux; trường hợp không thể tạo symlink phải báo skip rõ, không báo pass giả.
 
-### 6.2. EXP-003 — Retrieval và injection có giúp không?
+Thêm nhóm `PKG-`: cài tarball `npm pack` của core/pi-extension/cli vào thư mục sạch (không dùng node_modules của repo) và chạy command/handler thật bằng loader của Pi. Nhóm này tồn tại vì lỗi v0.1.3 chỉ lộ khi cài từ npm.
 
-**Hai arm chính:** foundation v0.1-compatible (cùng policy, context disabled) và cùng build với retrieval/injection enabled. Pi-default chỉ là arm tham khảo nếu cần; không dùng nó để gán tác dụng policy cho context.
+### 6.2. Live benchmark — hoãn
 
-- Fixture NestJS mở rộng trong `evals/fixtures/`, không thay tech profile: nhiều module, docs có conventions/domain rules và nhiều tài liệu không liên quan.
-- Ít nhất 8 task, 5 repetitions/task/arm, seeded interleaving. Tasks phải cần kiến thức không lộ trực tiếp trong prompt và có hidden verifiers.
-- Có tasks không cần retrieval để đo overhead/false injection, tasks tài liệu cập nhật và tasks nguồn nhạy cảm.
-- Configurable model/thinking nhưng không tự đổi provider hoặc mặc định model của người dùng. Record requested/served model, Pi version, commit, config hash, fixture hash, seed và effective conditions.
-- Pilot riêng để kiểm tra task difficulty/harness; đóng băng criteria + task set trước confirmatory runs. Không gộp pilot vào kết quả chính.
-- Metrics: functional success, source-hit/selection correctness theo oracle, injected tokens, total reported token components, cacheRead/cacheWrite, tool calls, latency và violations.
-- Không suy cost từ total tokens đơn thuần; cache và model-specific pricing có thể làm kết luận đổi chiều. Không cộng token estimate như thể đó là provider usage.
+EXP-003 (retrieval/injection) và EXP-004 (compaction/resume), fixture NestJS mở rộng, harness multi-turn và `bench validate` **không thuộc Phase 2**. Nếu sau này muốn tuyên bố lợi ích hoặc bật mặc định, cần mở lại thành design change riêng, với pilot, tiêu chí đóng băng trước và báo cáo uncertainty. Đến lúc đó: mọi context feature giữ opt-in.
 
-### 6.3. EXP-004 — Tiếp tục đúng sau compaction/resume?
+### 6.3. Dogfood đo chi phí (không phải benchmark)
 
-**Arms:** native compaction + retrieval giống nhau, so với structured compaction + cùng retrieval. Không thay hai yếu tố cùng lúc.
+Mục đích: biết context features làm **tăng hay giảm** token, tiền và thời gian trên công việc thật, để quyết định có nên giữ chúng. Không dùng để tuyên bố hiệu quả.
 
-- Ít nhất 6 kịch bản multi-turn, 5 repetitions/arm: constraint được đặt sớm, quyết định bị thay đổi, test chưa chạy, lỗi chưa giải quyết, tài liệu đổi và resume/fork đúng branch.
-- Harness phải giữ một Pi session qua các turn và chủ động trigger compaction/resume qua public Pi control surface. Chốt transport trong P2-01; không dùng `-p --no-session` hiện tại để giả lập mất context.
-- Test adapter/harness trước model runs: assert compaction thực sự xảy ra, resumed session đúng ID/branch, recent context được giữ và không lộ verifier.
-- Đo fact/constraint retention bằng assertions cụ thể và hidden tests, không chỉ hỏi LLM tự chấm summary của nó.
-- Count cả usage/latency của summarization. Native usage không quan sát được thì ghi unavailable; không tính thành 0 hay so cost thiếu một arm.
-- Báo cáo confidence intervals và breakdown từng task; với số runs này kết luận chỉ là thực nghiệm ban đầu, không phải chứng minh statistical non-inferiority.
+- **Cách làm:** chọn 5–8 task thật nhỏ trong repo này hoặc repo NestJS của maintainer. Mỗi task chạy hai lần bằng Pi bình thường, một lần context tắt và một lần bật, cùng model và thinking level. Đổi thứ tự bật/tắt giữa các task để tránh thiên lệch do cache nóng. Không cần fixture mới, harness mới hay hidden verifier; maintainer tự xét kết quả đúng/sai.
+- **Dữ liệu lấy từ telemetry và usage của Pi:** injected tokens ước tính, input/output token, `cacheRead`/`cacheWrite` khi provider báo, số tool call (read/search), thời gian từng lượt, và thời gian bước retrieval. Với compaction (nếu có P2-05) ghi thêm usage và thời gian của lượt tóm tắt. Usage không có thì ghi `unavailable`, không tính là 0.
+- **Quy tắc ghi nhận:** lưu model, Pi version, commit, config và switches vào một bảng trong `docs/experiments/` (tên đề xuất `DOGFOOD-001`). Chạy lỗi thì ghi lại, không loại bỏ lặng lẽ. Không đưa nội dung prompt, snippet hay kết quả tool vào báo cáo.
+- **Cách diễn giải:** cỡ mẫu nhỏ nên chỉ báo cáo số liệu thô và nhận xét định tính (ví dụ "task X tốn thêm ~N token, giảm M tool call"). Không tính ý nghĩa thống kê, không so sánh tiền khi chưa có giá model và cache, không suy ra kết luận chung.
+- **Dùng kết quả để làm gì:** nếu chi phí tăng rõ mà không thấy lợi ích, giữ feature ở trạng thái experimental hoặc hoãn (đặc biệt P2-05). Quyết định bật mặc định vẫn cần design change riêng.
 
 ## 7. Release gates đề xuất
 
-1. `npm run check`, build, replay cũ và context/session scenarios mới đều pass; verifiers reference/unsafe validation pass sau setup đúng dependencies.
+1. `npm run check`, build, replay cũ và context/session scenarios mới đều pass.
 2. Config v1 cũ + context disabled không thay đổi policy decisions/gates/telemetry location. Có golden regression cho legacy fixture.
-3. 100% deterministic known-sensitive-source/canary cases bị loại khỏi retrieval/injection và telemetry/report; không có known safety violation trong live variant runs.
+3. 100% deterministic known-sensitive-source/canary cases bị loại khỏi retrieval/injection và telemetry/report.
 4. Context override đúng precedence và không rò qua branch/workspace trong toàn bộ lifecycle matrix.
 5. Injected content không vượt estimated-token budget và hard byte cap; CLI giải thích được nguồn được chọn/bỏ.
-6. EXP-003 functional success point estimate không giảm quá 10 điểm phần trăm so với foundation; EXP-004 không giảm quá 10 điểm so với native. Phải công bố uncertainty, không gọi đây là chứng minh “không regression”.
-7. Có ít nhất một lợi ích đo được, đăng ký trước confirmatory run: ví dụ giảm ≥15% median read/search calls trên retrieval tasks; structured compaction tăng ≥15 điểm retention score trên forced-compaction tasks. So hiệu quả riêng từng feature, không dùng một lợi ích để che regression của feature khác.
-8. Nếu pilot cho thấy ceiling effect hoặc không có nhu cầu compaction, sửa thiết kế task trước confirmatory run thay vì đổi threshold sau khi xem kết quả.
-9. Feature không đạt safety/correctness gate không phát hành để bật sử dụng; feature đúng nhưng chưa chứng minh lợi ích chỉ được giữ opt-in/experimental. Chưa bật default chỉ vì tests pass.
-10. Update installation/config docs, threat model, failure catalog, experiment reports và changelog. Pin supported Pi version/range theo compatibility test, không tiếp tục dựa vào `*` mà không kiểm tra.
-
-Các con số ở gate 6–7 là **đề xuất để chốt**, không phải kết quả hay cam kết chắc chắn đạt được.
+6. Smoke test đóng gói (`PKG-`) pass: cài từ tarball sạch, mọi import runtime nằm trong `dependencies`.
+7. **Không bật mặc định.** Mọi context feature mặc định tắt và được gọi là experimental trong docs/changelog; không nêu lợi ích hiệu năng hay chất lượng vì chưa đo.
+8. Có báo cáo `DOGFOOD-001` theo mục 6.3 (chi phí token/thời gian quan sát được, kể cả khi context làm tăng chi phí).
+9. Update installation/config docs, threat model, failure catalog và changelog. Pin supported Pi range theo compatibility test.
 
 ## 8. Rủi ro và cách thu nhỏ
 
@@ -244,24 +233,26 @@ Các con số ở gate 6–7 là **đề xuất để chốt**, không phải k�
 | Summary bỏ mất decision hoặc “bịa đã test” | Structured contract, active-branch truth, giữ recent window native, hidden retention assertions, opt-in trước. |
 | Repeated compaction mất thông tin tích lũy | Preserve previous summary, split-turn tests, retention scenario qua ít nhất hai lần compaction. |
 | Session state lẫn nhánh | Restore từ branch, lifecycle matrix, clear cache trên tree/session transitions. |
-| Pi API drift hoặc provider cũ không còn dùng được | Compatibility spike, public API only, model/config là input benchmark; preflight fail sớm, không tự fallback model giữa arms. |
-| Harness không đủ khó | Expanded NestJS fixture, multi-turn tasks, separate pilot, verifier mutation/reference checks. |
+| Pi API drift | Chỉ dùng public API, pin range `^1.4.0`, compatibility test và `PKG-` smoke test. |
+| Không có bằng chứng lợi ích / chi phí tăng | Opt-in, mặc định tắt, ghi rõ "chưa đo"; dogfood chi phí theo 6.3; hoãn compaction nếu chi phí tăng mà không thấy lợi ích. |
+| Lỗi chỉ lộ khi cài từ npm | `PKG-` smoke test trong CI; mọi import runtime phải là dependency. |
 | Phạm vi phình thành memory/RAG platform | Local lexical retrieval, no new packages/services, không persistent content index, không new runtime/profile. |
 
 ## 9. Việc nên bắt đầu ngay khi duyệt plan
 
-- [ ] Chốt v0.2 MVP/full-scope và release criteria bên trên.
+- [ ] Chốt scope v0.2 alpha (P2-01..P2-04 + P2-06) và quyết định có làm P2-05 không.
 - [ ] Tạo branch P2-01; document supported Pi APIs và contract schema context/session entries.
-- [ ] Bổ sung hướng dẫn setup fixture (`npm ci --prefix evals/fixtures/nestjs-sample`) và dependency preflight; chạy lại `bench validate`.
-- [ ] Thống nhất project loader/profile semantics, legacy config regression và cache lifecycle.
-- [ ] Viết manifest EXP-003 + thiết kế multi-turn harness EXP-004 trước khi tuning retrieval/summary.
+- [ ] Chạy lại `npm run check` và `npm run eval`, ghi số liệu hiện tại vào PR P2-01.
+- [ ] Thống nhất project loader/profile semantics, legacy config regression và cách mở rộng `featureCatalog`.
+- [ ] Viết script smoke test đóng gói (`PKG-`).
+- [ ] Chọn danh sách task dogfood (6.3) và chốt các trường telemetry cần có (injected tokens, thời gian retrieval) ngay từ P2-03, để P2-06 không phải thêm instrumentation muộn.
 
 ## Tài liệu tham chiếu
 
 - [Roadmap tiếng Việt](../../PROJECT_OVERVIEW_vn.md)
 - [Configuration contract](../architecture/configuration.md)
 - [Threat model](../architecture/threat-model.md)
-- [EXP-002 và EXP-002b](../experiments/EXP-002-live-agent-benchmark.md)
+- [EXP-002 và EXP-002b](../experiments/EXP-002-live-agent-benchmark.md) (bằng chứng cũ, không mở rộng trong Phase 2)
 - [Failure catalog](../failure-catalog/README.md)
 - [Evaluation guide](../../evals/README.md)
 
