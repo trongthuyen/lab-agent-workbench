@@ -1,6 +1,6 @@
 # Configuration contract
 
-Status: v0.1 draft
+Status: v0.1 draft; the `context` group below is the Phase 2 contract (all off by default)
 
 ## Location
 
@@ -15,8 +15,11 @@ Configuration layers are applied in this order:
 3. Project override
 4. Session override
 
-Later layers take precedence. In v0.1 the project override is the `.lawb/config.json` file itself (loaded over the
-base defaults). The v0.1.2 pre-Phase 2 `/lawb` TUI wires a narrowly scoped session override layer
+Later layers take precedence. The project override is the `.lawb/config.json` file. Since the Phase 2 loader
+(`loadProjectConfig` / `resolveProjectConfig` in core, used by both the CLI and the Pi extension) the technology
+profile named by the file's `profile` key is applied between the base and the file, so a partial file inherits
+that profile's values. Files written by `lawb init` are fully materialized and resolve exactly as before. A profile
+name that is not built in adds no layer instead of rejecting the file, as such files were accepted before. The v0.1.2 pre-Phase 2 `/lawb` TUI wires a narrowly scoped session override layer
 for feature switches, described below; arbitrary session configuration is still deferred.
 Objects merge recursively. Arrays and scalar values are replaced as a whole; arrays are never appended implicitly.
 
@@ -51,6 +54,24 @@ commands. Existing v1 files need no migration. Session files are trusted local s
 tamper-resistant security store. Pi only creates a new session file after a user/assistant message;
 switches set before the first prompt stay in memory until then. In ephemeral Pi sessions switches
 last only until exit.
+
+## Context group (Phase 2 contract)
+
+`context` is additive in schema v1; files without it resolve to the defaults below, and `lawb init` now writes it.
+Nothing reads it yet: retrieval, injection and structured compaction arrive in later Phase 2 changes and stay
+experimental and opt-in.
+
+| Key | Default | Meaning |
+|---|---|---|
+| `enabled` | `false` | Master switch for every context feature |
+| `sources` | `["README.md", "docs/**/*.md"]` | Workspace-relative globs that may be retrieved; no `..`, absolute paths or negation |
+| `maxInjectedTokens` / `maxInjectedBytes` | `4000` / `16384` | Estimated-token budget and hard UTF-8 byte cap per request |
+| `maxChunks` / `maxChunkTokens` | `5` / `800` | Chunk count and size limits; `maxChunkTokens <= maxInjectedTokens` |
+| `maxFileBytes` | `262144` | Larger files are skipped; must be `<= maxBytesScanned` |
+| `maxFilesScanned` / `maxBytesScanned` | `200` / `2097152` | Per-turn scan limits |
+| `compaction.strategy` | `"native"` | `"structured"` is opt-in and experimental |
+
+All limits must be positive integers. These values are starting points that have not been measured.
 
 ## Validation
 

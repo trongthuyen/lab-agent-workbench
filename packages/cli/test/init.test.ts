@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
@@ -101,6 +101,19 @@ test("keeps CRLF line endings when the existing .gitignore uses them", async () 
     await writeFile(join(cwd, ".gitignore"), "node_modules/\r\ndist/", "utf8");
     await initializeProject({ cwd, profile: "nestjs" });
     assert.equal(await readFile(join(cwd, ".gitignore"), "utf8"), "node_modules/\r\ndist/\r\n**/.lawb\r\n");
+  } finally {
+    await rm(cwd, { recursive: true, force: true });
+  }
+});
+
+test("readProjectConfig applies the profile named by a partial project file", async () => {
+  const cwd = await mkdtemp(join(tmpdir(), "lawb-test-"));
+  try {
+    await mkdir(join(cwd, ".lawb"));
+    await writeFile(join(cwd, ".lawb", "config.json"), JSON.stringify({ profile: "nestjs" }), "utf8");
+    const config = await readProjectConfig(cwd);
+    assert.deepEqual(config.qualityGates.commands, ["npm run lint", "npm run typecheck", "npm test"]);
+    assert.equal(config.context.enabled, false);
   } finally {
     await rm(cwd, { recursive: true, force: true });
   }
