@@ -1,0 +1,35 @@
+{
+  "id": "CTX-SAFE-005",
+  "category": "context-safety",
+  "description": "A linked directory is never walked",
+  "kind": "context",
+  "files": {
+    "docs/real.md": "# Widget\n\nwidget docs\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "outsideFiles": {
+    "dir/inner.md": "# Inner\n\nCANARY-DIR widget\n"
+  },
+  "symlinks": {
+    "docs/linked": "outside:dir/"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/real.md"
+    ],
+    "skipped": {
+      "docs/linked": "symlink"
+    },
+    "mustNotContain": [
+      "CANARY-DIR"
+    ]
+  }
+}

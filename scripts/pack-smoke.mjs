@@ -43,6 +43,14 @@ try {
   // 2. `lawb init` writes a config that the extension then loads.
   execFileSync(process.execPath, [cli, "init", "--profile", "nestjs", "--no-gitignore"], { cwd: project });
 
+  await mkdir(join(project, "docs"));
+  await writeFile(join(project, "docs", "auth.md"), "# Authentication\n\nTokens expire quickly.\n");
+  await writeFile(join(project, "docs", "other.md"), "# Other\n\nunrelated\n");
+  const inspected = JSON.parse(execFileSync(process.execPath, [cli, "context", "inspect", "--query", "authentication tokens", "--json"], { cwd: project, encoding: "utf8" }));
+  if (inspected.selected.length !== 1 || inspected.selected[0].path !== "docs/auth.md") {
+    throw new Error("lawb context inspect did not select docs/auth.md");
+  }
+
   // 3. The extension registers /lawb and the real menu opens and applies, using only installed dependencies.
   const entry = join(install, "node_modules", "@lab-agent-workbench", "pi-extension", "dist", "index.js");
   const { default: factory, createLabAgentWorkbench } = await import(pathToFileURL(entry).href);

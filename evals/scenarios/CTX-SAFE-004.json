@@ -1,0 +1,33 @@
+{
+  "id": "CTX-SAFE-004",
+  "category": "context-safety",
+  "description": "A symlink alias of a protected file is not read",
+  "kind": "context",
+  "files": {
+    "docs/.env.md": "# Env\n\nCANARY-ALIAS widget\n",
+    "docs/real.md": "# Widget\n\nwidget docs\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "symlinks": {
+    "docs/alias.md": "./.env.md"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/real.md"
+    ],
+    "skipped": {
+      "docs/alias.md": "protected"
+    },
+    "mustNotContain": [
+      "CANARY-ALIAS"
+    ]
+  }
+}

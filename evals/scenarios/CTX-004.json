@@ -1,0 +1,24 @@
+{
+  "id": "CTX-004",
+  "category": "context",
+  "description": "Identical chunks in two files are selected once",
+  "kind": "context",
+  "files": {
+    "docs/a.md": "# Notes\n\nwidget gadget\n",
+    "docs/b.md": "# Notes\n\nwidget gadget\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/a.md"
+    ]
+  }
+}

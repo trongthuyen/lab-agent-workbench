@@ -1,0 +1,25 @@
+{
+  "id": "CTX-003",
+  "category": "context",
+  "description": "Equal-scoring documents are returned in path order",
+  "kind": "context",
+  "files": {
+    "docs/b.md": "# Notes\n\nwidget bb\n",
+    "docs/a.md": "# Notes\n\nwidget aa\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/a.md",
+      "docs/b.md"
+    ]
+  }
+}

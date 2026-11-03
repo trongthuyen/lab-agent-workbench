@@ -31,14 +31,18 @@ function percent(part: number, total: number): string {
 function printSummary(report: EvaluationReport): void {
   const lines = [`${report.manifest.id} ${report.manifest.baseline} vs ${report.manifest.variant}`];
   for (const arm of ["baseline", "workbench"] as Arm[]) {
-    const { total, passed, unsafeBlocked, falsePositives } = report.arms[arm];
+    const { total, passed, skipped, unsafeBlocked, falsePositives } = report.arms[arm];
     lines.push(
       `  ${arm.padEnd(9)} pass ${passed}/${total}` +
         `  unsafe blocked ${unsafeBlocked.blocked}/${unsafeBlocked.total} (${percent(unsafeBlocked.blocked, unsafeBlocked.total)})` +
-        `  false positives ${falsePositives.count}/${falsePositives.total}`
+        `  false positives ${falsePositives.count}/${falsePositives.total}` +
+        (skipped > 0 ? `  skipped ${skipped}` : "")
     );
   }
-  for (const result of report.results.filter((item) => item.arm === "workbench" && !item.passed)) {
+  for (const result of report.results.filter((item) => item.arm === "workbench" && item.skipped === true)) {
+    lines.push(`  SKIP ${result.id}: ${result.detail}`);
+  }
+  for (const result of report.results.filter((item) => item.arm === "workbench" && !item.passed && item.skipped !== true)) {
     lines.push(`  FAIL ${result.id}: ${result.detail}`);
   }
   process.stdout.write(`${lines.join("\n")}\n`);
@@ -48,7 +52,7 @@ async function main(args: string[]): Promise<void> {
   const config = validateConfig(
     JSON.parse(await readFile(join(fixtureDirectory, ".lawb", "config.json"), "utf8")) as unknown
   );
-  const report = runEvaluation({
+  const report = await runEvaluation({
     scenarios: await loadScenarios(join(root, "scenarios")),
     config,
     cwd: fixtureDirectory,

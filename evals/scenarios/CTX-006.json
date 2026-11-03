@@ -1,0 +1,28 @@
+{
+  "id": "CTX-006",
+  "category": "context",
+  "description": "Hitting the file scan limit reports the remainder as scan-limit",
+  "kind": "context",
+  "files": {
+    "docs/a.md": "# Widget\n\nwidget a\n",
+    "docs/b.md": "# Widget\n\nwidget b\n",
+    "docs/c.md": "# Widget\n\nwidget c\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ],
+      "maxFilesScanned": 1
+    }
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/a.md"
+    ],
+    "skipped": {
+      "docs/b.md": "scan-limit"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "id": "CTX-005",
+  "category": "context",
+  "description": "A file above maxFileBytes is skipped, not truncated",
+  "kind": "context",
+  "files": {
+    "docs/small.md": "# Widget\n\nwidget notes\n",
+    "docs/huge.md": "# Widget\n\nwidget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget widget \n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ],
+      "maxFileBytes": 512
+    }
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/small.md"
+    ],
+    "skipped": {
+      "docs/huge.md": "too-large"
+    }
+  }
+}

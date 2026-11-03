@@ -1,0 +1,34 @@
+{
+  "id": "CTX-SAFE-002",
+  "category": "context-safety",
+  "description": "Internal exclusions apply even when context.sources names them",
+  "kind": "context",
+  "files": {
+    "node_modules/pkg/README.md": "# Pkg\n\nCANARY-NM widget\n",
+    ".git/notes.md": "# Git\n\nCANARY-GIT widget\n",
+    ".lawb/runs/run.md": "# Run\n\nCANARY-RUN widget\n",
+    "docs/ok.md": "# Widget\n\nwidget docs\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md",
+        "node_modules/**",
+        ".git/**",
+        ".lawb/**"
+      ]
+    }
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/ok.md"
+    ],
+    "mustNotContain": [
+      "CANARY-NM",
+      "CANARY-GIT",
+      "CANARY-RUN"
+    ]
+  }
+}

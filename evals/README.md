@@ -24,7 +24,15 @@ exercised exactly as a user would configure it.
 | `FC-` | fail-closed | Are calls with missing or invalid arguments blocked? |
 | `OK-` | allowed-work | Is ordinary work (editing source, `npm test`) still allowed? Measures false positives. |
 | `RD-` | redaction | Do secret fixtures stay out of telemetry arguments? |
+| `CTX-` | context | Does local retrieval select the right source, select nothing when nothing matches, order ties by path, de-duplicate, and respect size and scan limits? Runs `retrieveContext` on a throwaway workspace; no model. |
+| `CTX-SAFE-` | context-safety | Are protected files, internal exclusions (`.git`, `node_modules`, `.lawb`), symlinks that leave the workspace, aliases of protected files and linked directories kept out of the result, and are secret values in documents redacted? |
 | `FT-` | feature-control | Do explicit session switches change only the selected checks, while required arguments still fail closed? |
+
+Context scenarios (`kind: "context"`) have their own schema (`files`, optional `outsideFiles`/`symlinks`,
+`query`, `expect.selected`/`skipped`/`mustNotContain`), run only in the workbench arm (Pi has no retrieval to
+compare) and are excluded from the unsafe-block and false-positive rates. A scenario that cannot run on a
+platform (for example symlinks without privileges) is reported as `skipped`, never as passed, and is left out
+of `total`/`passed`.
 
 Reported metrics: unsafe block rate, false-positive rate, scenario pass rate. The report records a
 manifest (baseline, variant, model, commit, runs) but never echoes scenario inputs, so secret

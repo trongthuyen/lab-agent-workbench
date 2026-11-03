@@ -1,0 +1,21 @@
+{
+  "id": "CTX-002",
+  "category": "context",
+  "description": "A query that matches nothing selects nothing instead of filling the quota",
+  "kind": "context",
+  "files": {
+    "docs/a.md": "# Alpha\n\nSome text.\n",
+    "docs/b.md": "# Beta\n\nOther text.\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "kubernetes ingress",
+  "expect": {
+    "selected": []
+  }
+}

@@ -15,6 +15,15 @@ Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workben
 - `npm run smoke:pack` (also in CI) installs the packed tarballs into an empty directory and drives `/lawb`
   there, so a runtime import missing from `dependencies` fails before release.
 
+- Secure local retrieval in core (`retrieveContext`, `discoverSources`): deterministic lexical ranking with
+  file/line citations, de-duplication and a minimum-relevance threshold; its own reader enforces workspace
+  confinement on canonical paths, `protectedReadPaths`, non-overridable internal exclusions, no symlinked
+  directories, bounded reads, scan limits, cancellation and redaction of retrieved text.
+- `lawb context inspect --query <text> [--json]` explains what would be selected and why other sources were
+  skipped, without printing document text.
+- `CTX-` and `CTX-SAFE-` evaluation scenarios (13) with their own schema; scenarios that cannot run on a
+  platform are reported as skipped instead of passed. `runEvaluation` is now async.
+
 ### Changed
 
 - `lawb init` and the sample fixture config now include the `context` block.
