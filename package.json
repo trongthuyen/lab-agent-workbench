@@ -12,6 +12,7 @@
     "bench": "npm run bench --workspace @lab-agent-workbench/evals --",
     "build": "tsc -b packages/core packages/cli packages/pi-extension evals",
     "check": "npm run lint && npm run typecheck && npm test",
+    "dogfood": "npm run dogfood --workspace @lab-agent-workbench/evals --",
     "eval": "npm run build && npm run eval --workspace @lab-agent-workbench/evals",
     "lint": "eslint .",
     "smoke:pack": "node scripts/pack-smoke.mjs",

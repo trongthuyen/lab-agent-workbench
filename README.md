@@ -79,6 +79,22 @@ its configured rules, not necessarily the built-in defaults. Quality gates remai
 From a clone, build and install the local extension as described below, then restart Pi. The menu
 requires interactive TUI mode; policy and telemetry still work in print/JSON/RPC modes.
 
+### Project context injection (experimental, off by default)
+
+With `context.enabled: true` in `.lawb/config.json` (or the `/lawb` switch for one session), the extension adds a
+few short excerpts of your Markdown docs (`README.md` and `docs/**/*.md` by default) to each model request, chosen
+by keyword match, framed as untrusted reference data and kept within a token and byte budget. It never reads
+protected files, files outside the workspace or build/VCS directories.
+
+```bash
+lawb context inspect --query "how do refresh tokens expire"   # what would be chosen, and why not the rest
+```
+
+It sends excerpts of your docs to the model provider, costs extra tokens, and has **not been measured**: neither a
+benefit nor the cost is known yet. See [DOGFOOD-001](./docs/experiments/DOGFOOD-001-context-cost.md) for how to
+measure it on your own work, and the [configuration contract](./docs/architecture/configuration.md) for the
+settings.
+
 ### Quality gates
 
 `lawb gates` runs the commands in `qualityGates.commands` (for the `nestjs` profile: `npm run lint`,

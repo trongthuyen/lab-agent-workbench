@@ -7,6 +7,7 @@
   "scripts": {
     "bench": "node dist/bench.js",
     "build": "tsc -b tsconfig.json",
+    "dogfood": "node dist/dogfood-cli.js",
     "eval": "node dist/cli.js",
     "test": "tsc -p tsconfig.test.json && node .test-dist/test/all.test.js",
     "typecheck": "tsc -b tsconfig.json --pretty false"
