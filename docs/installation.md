@@ -11,6 +11,7 @@
 ```bash
 pi install npm:@lab-agent-workbench/pi-extension        # every project you open with Pi
 pi install -l npm:@lab-agent-workbench/pi-extension     # the current project only
+# experimental pre-release (context injection, off by default): add @alpha to the package name
 pi list                                                  # confirm it is listed
 ```
 
