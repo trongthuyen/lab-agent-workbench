@@ -35,14 +35,24 @@ session layer over the unchanged base/project configuration:
 | Secret read protection | `policies.protectedReadPaths: []` |
 | Risky command blocking | `policies.riskyCommandPatterns: []` |
 | Telemetry | `telemetry.enabled: false` |
+| Project context injection (experimental) | `context.enabled: false` (it is on only when the project or the switch says so) |
+
+`contextInjection` follows `context.enabled` from the project until the session sets it, in either direction; it
+changes only `context.enabled`, never the limits or sources, and is not a guardrail, so turning it off warns about
+nothing. Retrieval keeps the project's `protectedReadPaths` even when the Secret read protection switch is off,
+because injection is automatic rather than a read someone asked for. The footer shows `LAWb 4/4` for the stable
+switches plus ` | context` when injection is on.
 
 When a guardrail is on, its original configured values are used; no list is erased from project
 config. Telemetry initially follows project config and can be explicitly enabled for the session.
 All-on is not proof that rule lists are non-empty. Missing/invalid required tool arguments are
 still refused, and invalid project configuration still fails closed even with all switches off.
 
-Pi owns persistence: a `lawb-features` custom entry contains only `version: 1`, `cwd`, and the four
-boolean `features` (`writeProtection`, `readProtection`, `riskyCommands`, `telemetry`). Restore uses
+Pi owns persistence: a `lawb-features` custom entry contains only `version`, `cwd`, and the
+boolean `features` (`writeProtection`, `readProtection`, `riskyCommands`, `telemetry`, `contextInjection`).
+Entries are written as `version: 2`. A `version: 1` entry (the first four switches only) is still read: it keeps
+its saved choices and takes context injection from the project setting. An entry with any other version, an
+unknown or missing switch, or a non-boolean value is ignored with a warning, never partly applied. Restore uses
 the newest entry on the active branch, never inactive branches. Invalid state falls back to project
 defaults with a warning; a different workspace cannot inherit the saved switches. New sessions
 start from defaults, resume/reload restores, fork inherits at its fork point, and tree navigation

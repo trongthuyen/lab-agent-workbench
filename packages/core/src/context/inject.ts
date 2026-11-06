@@ -37,6 +37,14 @@ export function injectionBudget(config: WorkbenchConfig, usage: ContextUsageLike
   return tokens < minUsefulTokens ? { tokens: 0, skipReason: "context-pressure" } : { tokens };
 }
 
+/**
+ * Retrieval is automatic, not a read the user or model asked for, so the session's "Secret read protection"
+ * switch must not widen it: it always keeps the project's own protected read paths.
+ */
+export function retrievalConfig(effective: WorkbenchConfig, project: WorkbenchConfig): WorkbenchConfig {
+  return { ...effective, policies: { ...effective.policies, protectedReadPaths: project.policies.protectedReadPaths } };
+}
+
 /** Marks the single message Workbench adds to a request, so it can be found and replaced, never duplicated. */
 export const contextMessageType = "lawb-context";
 

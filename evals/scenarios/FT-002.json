@@ -3,7 +3,21 @@
   "category": "feature-control",
   "description": "Disabling write protection does not disable secret read protection",
   "kind": "tool-call",
-  "features": { "writeProtection": false, "readProtection": true, "riskyCommands": true, "telemetry": true },
-  "toolCall": { "toolName": "read", "input": { "path": ".env" } },
-  "expect": { "allowed": false, "rule": "protected-path" }
+  "features": {
+    "writeProtection": false,
+    "readProtection": true,
+    "riskyCommands": true,
+    "telemetry": true,
+    "contextInjection": false
+  },
+  "toolCall": {
+    "toolName": "read",
+    "input": {
+      "path": ".env"
+    }
+  },
+  "expect": {
+    "allowed": false,
+    "rule": "protected-path"
+  }
 }

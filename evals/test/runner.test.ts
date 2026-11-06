@@ -132,7 +132,7 @@ test("feature-control scenarios require valid explicit switches and their own ca
   assert.throws(() => parseScenario({ ...scenario, kind: "redaction" }, "ft.json"), /requires a tool-call/);
   assert.throws(() => parseScenario(scenario, "ft.json"), /requires features/);
   assert.throws(() => parseScenario({ ...scenario, features: {} }, "ft.json"), /supported boolean switches/);
-  const features = { writeProtection: true, readProtection: false, riskyCommands: true, telemetry: false };
+  const features = { writeProtection: true, readProtection: false, riskyCommands: true, telemetry: false, contextInjection: false };
   assert.throws(() => parseScenario({ ...scenario, category: "allowed-work", features }, "ft.json"), /require the feature-control category/);
   assert.equal(parseScenario({ ...scenario, features }, "ft.json").id, "FT-X");
 });
@@ -228,4 +228,16 @@ test("rejects malformed injection expectations", () => {
   for (const [value, message] of cases) {
     assert.throws(() => parseScenario(value, "x"), message);
   }
+});
+
+test("session scenarios need valid switches and a boolean contextEnabled", () => {
+  const valid = {
+    id: "SES-X", category: "session", description: "d", kind: "context", files: {}, query: "q",
+    features: { writeProtection: true, readProtection: true, riskyCommands: true, telemetry: true, contextInjection: true },
+    expect: { selected: [], contextEnabled: true }
+  };
+  assert.doesNotThrow(() => parseScenario(valid, "x"));
+  assert.throws(() => parseScenario({ ...valid, features: { writeProtection: true } }, "x"), /supported boolean switches/);
+  assert.throws(() => parseScenario({ ...valid, expect: { selected: [], contextEnabled: "yes" } }, "x"), /contextEnabled/);
+  assert.throws(() => parseScenario({ ...valid, category: "allowed-work" }, "x"), /used together/);
 });

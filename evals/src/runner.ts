@@ -9,6 +9,7 @@ import {
   injectionBudget,
   packContext,
   renderContext,
+  retrievalConfig,
   retrieveContext,
   type WorkbenchConfig
 } from "@lab-agent-workbench/core";
@@ -114,12 +115,17 @@ async function runWorkbenchContext(scenario: ContextScenario, config: WorkbenchC
       }
     }
 
-    const effective = scenario.config ? resolveConfig(config, scenario.config) : config;
+    const project = scenario.config ? resolveConfig(config, scenario.config) : config;
+    const session = scenario.features ? resolveFeatureConfig(project, scenario.features) : project;
+    const effective = retrievalConfig(session, project);
     const result = await retrieveContext({ root, query: scenario.query, config: effective });
     const selected = result.selected.map((chunk) => chunk.path);
     const problems: string[] = [];
     if (JSON.stringify(selected) !== JSON.stringify(scenario.expect.selected)) {
       problems.push(`selected ${selected.length} chunk(s), expected ${scenario.expect.selected.length} with the expected sources`);
+    }
+    if (scenario.expect.contextEnabled !== undefined && session.context.enabled !== scenario.expect.contextEnabled) {
+      problems.push(`effective context.enabled was ${session.context.enabled}, expected ${scenario.expect.contextEnabled}`);
     }
     const skipped = new Map(result.skipped.map((entry) => [entry.path, entry.reason]));
     for (const [path, reason] of Object.entries(scenario.expect.skipped ?? {})) {

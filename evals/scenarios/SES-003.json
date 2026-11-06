@@ -1,0 +1,32 @@
+{
+  "id": "SES-003",
+  "category": "session",
+  "description": "Without a context switch change the project setting stands, whatever the other switches say",
+  "kind": "context",
+  "files": {
+    "docs/a.md": "# Widget\n\nwidget docs\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ],
+      "enabled": true
+    }
+  },
+  "features": {
+    "writeProtection": false,
+    "readProtection": true,
+    "riskyCommands": true,
+    "telemetry": false,
+    "contextInjection": true
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/a.md"
+    ],
+    "contextEnabled": true
+  }
+}

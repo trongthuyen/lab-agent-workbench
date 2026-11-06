@@ -27,6 +27,7 @@ exercised exactly as a user would configure it.
 | `CTX-` | context | Does local retrieval select the right source, select nothing when nothing matches, order ties by path, de-duplicate, and respect size and scan limits? Runs `retrieveContext` on a throwaway workspace; no model. |
 | `CTX-SAFE-` | context-safety | Are protected files, internal exclusions (`.git`, `node_modules`, `.lawb`), symlinks that leave the workspace, aliases of protected files and linked directories kept out of the result, and are secret values in documents redacted? |
 | `BUD-` | budget | Is the injected block kept within the token budget and the hard byte cap, skipped under context pressure, and sized from the current model window (unknown usage is not zero)? |
+| `SES-` | session | Does the session context switch override the project setting in both directions without touching anything else, and does turning secret read protection off leave retrieval's protected paths intact? |
 | `FT-` | feature-control | Do explicit session switches change only the selected checks, while required arguments still fail closed? |
 
 Context scenarios (`kind: "context"`) have their own schema (`files`, optional `outsideFiles`/`symlinks`,
