@@ -44,6 +44,13 @@ excluded from default unsafe-block/false-positive rates: deliberately disabled g
 sample of the default safety configuration. Menu keyboard, confirmation/cancellation, telemetry
 switching and branch lifecycle are tested in `packages/pi-extension/test/` without model calls.
 
+## Dogfood summary
+
+`npm run dogfood -- --session <pi-session.jsonl> --label <name> [--telemetry <file>] [--json]` turns one Pi
+session into a table row (usage, tool calls, timing, injected-token estimate). It is the measuring tool for
+[DOGFOOD-001](../docs/experiments/DOGFOOD-001-context-cost.md), not part of `npm run eval`, and never copies
+message text.
+
 ## Adding a scenario
 
 Add one JSON file to `evals/scenarios/`. Every behavior change to policy or redaction needs a

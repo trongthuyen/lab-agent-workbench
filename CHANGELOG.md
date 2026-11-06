@@ -39,6 +39,13 @@ Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workben
 - `type: "context"` telemetry records with counters only, and a one-time notice at 80% context usage.
 - `BUD-` scenarios and an injection stage for context scenarios.
 
+- `npm run dogfood`: summarizes a Pi session (tokens including cache reads/writes, tool calls, timing) and the
+  context telemetry into a table row without copying any message text; missing usage is `unavailable`, never 0.
+  [DOGFOOD-001](docs/experiments/DOGFOOD-001-context-cost.md) is the hands-on protocol for measuring what the
+  context features cost. It has **not been run**: there are no results yet.
+- Failure catalog: FC-010 (retrieval vs the secret-read switch), FC-204 (the 0.1.2 packaging bug), FC-106/107
+  (context features unmeasured; untrusted documents).
+
 ### Changed
 
 - `lawb init` and the sample fixture config now include the `context` block.

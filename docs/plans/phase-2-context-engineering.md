@@ -4,6 +4,10 @@
 
 **Baseline repository:** `a00354e` — các package phát hành ở v0.1.3 (đã có `/lawb` feature controls từ v0.1.2).
 
+**Tiến độ (2026-11-06):** P2-01 (PR #14), P2-02 (#15), P2-03 (#16), P2-04 (#17) đã merge. P2-06 đã có công cụ và tài liệu
+(`npm run dogfood`, [DOGFOOD-001](../experiments/DOGFOOD-001-context-cost.md)); **chưa chạy dogfood thật nên chưa có số liệu nào**,
+gate 8 vẫn chưa đạt cho đến khi maintainer chạy và điền báo cáo. P2-05 chưa làm và vẫn cần quyết định riêng.
+
 **Cập nhật gần nhất:** bỏ kiểm định benchmark live khỏi Phase 2 theo quyết định của maintainer (chưa muốn làm). Hệ quả: mọi tính năng context là **opt-in/experimental**, không bật mặc định và không tuyên bố hiệu quả; xem mục 3 và 7.
 
 **Phạm vi:** Pi + NestJS; không thay runtime, không thêm technology profile.

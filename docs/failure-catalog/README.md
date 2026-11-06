@@ -71,6 +71,15 @@ Entry format: **symptom**, **cause**, **detection**, **fix**, **status**.
 - **Fix:** only files matching an `--include` glob (or a non-negated `-g` glob) are considered; an include that would match the env file still blocks.
 - **Status:** fixed (OK-020 uses the exact command).
 
+### FC-010: automatic context retrieval would have followed the "Secret read protection" switch
+- **Symptom:** found in design review before release: with the `/lawb` secret-read switch off for a session, the
+  retrieval reader (which opens files itself) used the emptied `protectedReadPaths`, so `.env`-style docs matching the
+  context sources could have been injected into model requests without anyone asking to read them.
+- **Cause:** retrieval used the session's effective policy config, and the switch rewrites `protectedReadPaths`.
+- **Detection:** reviewing how the new switch interacts with the new reader (P2-04).
+- **Fix:** retrieval always keeps the project's own protected read paths (`retrievalConfig`).
+- **Status:** fixed (SES-004, an extension test and a core test).
+
 ## Process failures
 
 ### FC-201: lockfile pointed at a private registry
@@ -94,6 +103,16 @@ Entry format: **symptom**, **cause**, **detection**, **fix**, **status**.
 - **Fix:** all run paths are made absolute; regression test added.
 - **Status:** fixed. Lesson: `--list-models` succeeded the whole time, so it is not evidence that a real run will work.
 
+### FC-204: `/lawb` failed after installing from npm (0.1.2)
+- **Symptom:** `/lawb` showed "LAWb features were not applied" for every user who installed the package.
+- **Cause:** the menu imports `@earendil-works/pi-tui` at runtime, but the package listed it only as a peer
+  dependency, so a Pi package directory did not contain it. The nested import resolved natively (Pi's loader alias
+  does not reach it) and failed, and a catch-all hid the real error behind a message about configuration.
+- **Detection:** reported after release; reproduced by driving the real handler through Pi's loader.
+- **Fix:** `pi-tui` is a regular dependency, a menu that cannot load says so, and `npm run smoke:pack` (also in CI)
+  installs the packed tarballs into an empty directory without peers and drives `/lawb` and `lawb context inspect`.
+- **Status:** fixed in 0.1.3. Lesson: unit tests inside the repository see the repository's `node_modules`.
+
 ## Known open limitations
 
 | ID | Limitation | Why it matters |
@@ -103,3 +122,5 @@ Entry format: **symptom**, **cause**, **detection**, **fix**, **status**.
 | FC-103 | The shared home telemetry log is readable by the agent through the `read` tool. | It records `cwd` and redacted arguments of every uninitialized project. |
 | FC-104 | Live-agent behavior has been measured twice ([EXP-002](../experiments/EXP-002-live-agent-benchmark.md) and its fix check): one model, one sample project, functional tasks at a ceiling. It cannot yet detect a drop in task success. | The v0.1 "no drop in task success" claim is supported only weakly. |
 | FC-105 | After a refusal the model may stop and ask the user instead of finding a safe alternative (T10: 5 of 5). | Safe, but a guard that ends the task is a cost in unattended runs. |
+| FC-106 | Context retrieval and injection (opt-in, experimental) have no measured benefit or cost: the budget shares, ranking threshold and 80% notice are unmeasured starting values, and the effect on provider cache hits is unknown. See [DOGFOOD-001](../experiments/DOGFOOD-001-context-cost.md). | They may cost tokens and time without helping; there is no evidence yet either way. |
+| FC-107 | Retrieved documents are untrusted data that can contain instructions. The frame and tag escaping reduce the risk and cannot remove it. Retrieval checks a file and reads it later (TOCTOU), and redaction misses unknown secret formats. | Guardrails, not a sandbox; enforcement stays outside the model. |

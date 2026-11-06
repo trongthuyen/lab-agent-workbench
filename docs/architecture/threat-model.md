@@ -61,6 +61,11 @@ Status: v0.1 draft
   "untrusted" message. A document can still contain instructions that a model follows; the frame lowers that risk
   and cannot remove it, and policy enforcement stays outside the model. The extra tokens cost money and time, and
   changing excerpts can reduce provider cache hits; none of this has been measured.
+- Context injection is a second path by which file content reaches the model provider besides the `read` tool. It
+  keeps the project's `protectedReadPaths` even when the session's secret-read switch is off, re-reads each source
+  through the same checks before every request, and records only counters in telemetry. A session with injection
+  on sends excerpts of the user's Markdown docs to the configured model provider; it is off unless the project or
+  the user turns it on.
 - Individual tool calls do not prompt for conditional approval; they are allowed or blocked.
 - The v0.1.2 `/lawb` TUI lets an idle user disable guardrails for a Pi session branch after
   confirmation. That intentionally removes the corresponding checks; a visible footer warning is
