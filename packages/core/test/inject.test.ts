@@ -9,6 +9,7 @@ import {
   packContext,
   renderContext,
   resolveConfig,
+  retrievalConfig,
   retrieveContext,
   revalidateChunks,
   type SelectedChunk
@@ -110,4 +111,13 @@ test("revalidation keeps unchanged chunks and drops edited, deleted and newly pr
   } finally {
     await rm(root, { recursive: true, force: true });
   }
+});
+
+test("retrieval keeps the project's protected read paths even when the session config empties them", () => {
+  const project = resolveConfig({ policies: { protectedReadPaths: ["secret/**"] } });
+  const session = resolveConfig(project, { policies: { protectedReadPaths: [] }, context: { enabled: true } });
+  const effective = retrievalConfig(session, project);
+  assert.deepEqual(effective.policies.protectedReadPaths, ["secret/**"]);
+  assert.equal(effective.context.enabled, true, "everything else comes from the session config");
+  assert.deepEqual(session.policies.protectedReadPaths, [], "the session config itself is not modified");
 });

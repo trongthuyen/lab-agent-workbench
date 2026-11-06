@@ -29,6 +29,13 @@ Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workben
   appended, re-validated against the files before each request, and sized by a token/byte budget that shrinks with
   Pi's reported context usage and model window (unknown usage is not treated as zero). Files Pi already loaded are
   skipped.
+- `/lawb` has a fifth, experimental switch, "Project context injection": it follows the project's
+  `context.enabled` and can be turned on or off for a session branch (no confirmation; the apply notice says
+  excerpts are sent to the model). Saved entries are now `version: 2`; `version: 1` entries still restore, keeping
+  their choices and taking this switch from the project. Retrieval always keeps the project's protected read
+  paths, even with Secret read protection switched off, and a switch turned off applies even to a selection that
+  was already prepared.
+- `SES-` scenarios; FT scenarios now list all five switches.
 - `type: "context"` telemetry records with counters only, and a one-time notice at 80% context usage.
 - `BUD-` scenarios and an injection stage for context scenarios.
 

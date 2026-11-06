@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { Scenario } from "./types.js";
 import { validateFeatureStates } from "@lab-agent-workbench/core";
 
-const categories = new Set(["protected-path", "risky-command", "fail-closed", "allowed-work", "redaction", "feature-control", "context", "context-safety", "budget"]);
+const categories = new Set(["protected-path", "risky-command", "fail-closed", "allowed-work", "redaction", "feature-control", "context", "context-safety", "budget", "session"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -30,7 +30,7 @@ export function parseScenario(value: unknown, source: string): Scenario {
     return fail("description must be a non-empty string");
   }
 
-  if ((value.category === "context" || value.category === "context-safety" || value.category === "budget") !== (value.kind === "context")) {
+  if ((value.category === "context" || value.category === "context-safety" || value.category === "budget" || value.category === "session") !== (value.kind === "context")) {
     return fail("context categories and the context kind must be used together");
   }
   if (value.category === "feature-control" && value.kind !== "tool-call") {
@@ -96,6 +96,12 @@ export function parseScenario(value: unknown, source: string): Scenario {
     }
     if (expect.mustNotContain !== undefined && !isStringArray(expect.mustNotContain)) {
       return fail("expect.mustNotContain must be an array of strings");
+    }
+    if (value.features !== undefined) {
+      try { validateFeatureStates(value.features); } catch { return fail("features must contain exactly the supported boolean switches"); }
+    }
+    if (expect.contextEnabled !== undefined && typeof expect.contextEnabled !== "boolean") {
+      return fail("expect.contextEnabled must be a boolean");
     }
     const { usage } = value;
     if (usage !== undefined &&

@@ -1,0 +1,39 @@
+{
+  "id": "SES-004",
+  "category": "session",
+  "description": "Turning secret read protection off for the session does not let retrieval read protected docs",
+  "kind": "context",
+  "files": {
+    "docs/.env.md": "# Env\n\nCANARY-SES widget\n",
+    "docs/a.md": "# Widget\n\nwidget docs\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ],
+      "enabled": true
+    }
+  },
+  "features": {
+    "writeProtection": true,
+    "readProtection": false,
+    "riskyCommands": true,
+    "telemetry": true,
+    "contextInjection": true
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/a.md"
+    ],
+    "skipped": {
+      "docs/.env.md": "protected"
+    },
+    "mustNotContain": [
+      "CANARY-SES"
+    ],
+    "contextEnabled": true
+  }
+}

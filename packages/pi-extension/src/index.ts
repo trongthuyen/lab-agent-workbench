@@ -80,6 +80,7 @@ export function createLabAgentWorkbench(options: ExtensionOptions = {}): (pi: Ex
     clearContext = registerContextInjection(
       pi,
       configFor,
+      async (cwd) => (await loadedConfigFor(cwd)).config,
       async (cwd, config, record: ContextTelemetryRecord) => {
         if (config.telemetry.enabled) await appendTelemetry(cwd, config, record);
       }

@@ -5,6 +5,7 @@ import {
   injectionBudget,
   packContext,
   retrieveContext,
+  retrievalConfig,
   revalidateChunks,
   type PackedContext,
   type WorkbenchConfig
@@ -55,6 +56,7 @@ interface Turn {
 export function registerContextInjection(
   pi: ExtensionAPI,
   configFor: (cwd: string) => Promise<WorkbenchConfig>,
+  projectConfigFor: (cwd: string) => Promise<WorkbenchConfig>,
   emit: EmitTelemetry
 ): { clear: () => void } {
   const turns = new Map<string, Turn>();
@@ -84,7 +86,7 @@ export function registerContextInjection(
 
     let config: WorkbenchConfig;
     try {
-      config = await configFor(ctx.cwd);
+      config = retrievalConfig(await configFor(ctx.cwd), await projectConfigFor(ctx.cwd));
     } catch {
       return undefined; // Invalid config already fails closed at the tool boundary.
     }
@@ -159,6 +161,12 @@ export function registerContextInjection(
 
     const turn = turns.get(keyFor(ctx.cwd));
     if (!turn) return unchanged();
+    try {
+      // A switch turned off in /lawb applies at once, even to a selection already prepared.
+      if (!(await configFor(ctx.cwd)).context.enabled) return unchanged();
+    } catch {
+      return unchanged();
+    }
 
     let block = turn.packed;
     try {

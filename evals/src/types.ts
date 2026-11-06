@@ -6,7 +6,7 @@ interface ScenarioBase {
   id: string;
   category:
     | "protected-path" | "risky-command" | "fail-closed" | "allowed-work" | "redaction" | "feature-control"
-    | "context" | "context-safety" | "budget";
+    | "context" | "context-safety" | "budget" | "session";
   description: string;
 }
 
@@ -45,7 +45,11 @@ export interface ContextScenario extends ScenarioBase {
   query: string;
   /** Pi's reported context usage; selects the injection stage (budget, packing, frame). `tokens: null` is unknown. */
   usage?: { tokens: number | null; contextWindow: number };
+  /** Explicit session switches applied over the project config, as `/lawb` would. */
+  features?: FeatureStates;
   expect: {
+    /** The effective `context.enabled` after the session switches. */
+    contextEnabled?: boolean;
     /** Paths of the selected chunks, in rank order. */
     selected: string[];
     /** Path → skip reason that must be reported. */

@@ -1,0 +1,32 @@
+{
+  "id": "SES-002",
+  "category": "session",
+  "description": "The session switch turns context off over a project that enables it",
+  "kind": "context",
+  "files": {
+    "docs/a.md": "# Widget\n\nwidget docs\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ],
+      "enabled": true
+    }
+  },
+  "features": {
+    "writeProtection": true,
+    "readProtection": true,
+    "riskyCommands": true,
+    "telemetry": true,
+    "contextInjection": false
+  },
+  "query": "widget",
+  "expect": {
+    "selected": [
+      "docs/a.md"
+    ],
+    "contextEnabled": false
+  }
+}

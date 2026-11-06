@@ -37,6 +37,8 @@ async function sandbox() {
     mode: "tui",
     hasUI: true,
     isIdle: () => controls.idle,
+    getContextUsage: () => undefined,
+    signal: undefined,
     sessionManager: { getBranch: () => controls.nativeSession?.getBranch() ?? controls.branch },
     ui: {
       custom: async () => { controls.menuOpened += 1; return controls.selection; },
@@ -72,7 +74,7 @@ async function sandbox() {
 }
 
 const defaults = () => defaultFeatureStates(resolveConfig());
-const off = (): FeatureStates => ({ writeProtection: false, readProtection: false, riskyCommands: false, telemetry: false });
+const off = (): FeatureStates => ({ writeProtection: false, readProtection: false, riskyCommands: false, telemetry: false, contextInjection: false });
 
 test("/lawb applies session switches only after confirming guardrail disable, and restores rules when enabled", async () => {
   const box = await sandbox();
@@ -204,7 +206,8 @@ test("other workspaces and invalid newest state cannot inherit disabled guardrai
     assert.notEqual(await box.call("read", { path: ".env" }), undefined);
     box.ctx.cwd = box.project;
     for (const data of [
-      { version: 2, cwd: box.project, features: off() },
+      { version: 3, cwd: box.project, features: off() },
+      { version: 2, cwd: box.project, features: { writeProtection: false, readProtection: false, riskyCommands: false, telemetry: false } },
       { version: 1, cwd: box.project, features: { ...off(), typo: false } }
     ]) {
       box.controls.branch = [...saved, { type: "custom", customType: featureStateEntry, data, id: "bad", parentId: null, timestamp: "" }];
@@ -263,5 +266,134 @@ test("non-TUI modes, busy agent, malformed selection and failed persistence do n
     await box.command();
     assert.equal(box.controls.saved.length, 0);
     assert.notEqual(await box.call("read", { path: ".env" }), undefined);
+  } finally { await box.cleanup(); }
+});
+
+async function withDocs(box: Awaited<ReturnType<typeof sandbox>>, projectEnabled: boolean): Promise<void> {
+  await mkdir(join(box.project, "docs"), { recursive: true });
+  await writeFile(join(box.project, "docs", "auth.md"), "# Authentication\n\nTokens expire after fifteen minutes.\n");
+  await writeFile(join(box.project, "docs", "other.md"), "# Other\n\nunrelated\n");
+  await mkdir(join(box.project, ".lawb"), { recursive: true });
+  await writeFile(join(box.project, ".lawb", "config.json"),
+    JSON.stringify(resolveConfig({ context: { enabled: projectEnabled, sources: ["**/*.md"] } })));
+}
+
+const prompt = (box: Awaited<ReturnType<typeof sandbox>>) => box.emit("before_agent_start", {
+  type: "before_agent_start", messageType: "user", prompt: "how do authentication tokens expire", systemPromptOptions: { contextFiles: [] }
+});
+const request = async (box: Awaited<ReturnType<typeof sandbox>>) => {
+  const result = await box.emit("context", { type: "context", messages: [{ role: "user", content: "q" }] }) as
+    { messages?: { customType?: string }[] } | undefined;
+  return (result?.messages ?? []).filter((message) => message.customType === "lawb-context").length;
+};
+
+test("the context switch turns injection on for a session even when the project leaves it off, without a confirmation", async () => {
+  const box = await sandbox();
+  try {
+    await withDocs(box, false);
+    await box.emit("session_start");
+    await prompt(box);
+    assert.equal(await request(box), 0);
+    assert.doesNotMatch(box.controls.status, /context/);
+
+    box.controls.selection = { ...defaults(), contextInjection: true };
+    await box.command();
+    assert.equal(box.controls.confirmations, 0, "context injection is not a guardrail");
+    assert.equal(box.controls.saved.length, 1);
+    const saved = box.controls.saved[0] as unknown as { data: { version: number; features: FeatureStates } };
+    assert.equal(saved.data.version, 2);
+    assert.equal(saved.data.features.contextInjection, true);
+    assert.match(box.controls.status, /4\/4 \| context/);
+    assert.match(box.controls.notifications.at(-1)?.message ?? "", /sends excerpts/);
+    await prompt(box);
+    assert.equal(await request(box), 1);
+
+    // Reload keeps it; a new session goes back to the project default.
+    await box.emit("session_shutdown");
+    await box.emit("session_start", { reason: "reload" });
+    await prompt(box);
+    assert.equal(await request(box), 1);
+    box.controls.branch = [];
+    await box.emit("session_start", { reason: "new" });
+    await prompt(box);
+    assert.equal(await request(box), 0);
+    const projectConfig = JSON.parse(await readFile(join(box.project, ".lawb", "config.json"), "utf8")) as { context: { enabled: boolean } };
+    assert.equal(projectConfig.context.enabled, false, "project config is untouched");
+  } finally { await box.cleanup(); }
+});
+
+test("turning the switch off stops injection immediately, even for a selection already prepared", async () => {
+  const box = await sandbox();
+  try {
+    await withDocs(box, true);
+    await box.emit("session_start");
+    await prompt(box);
+    assert.equal(await request(box), 1);
+    box.controls.selection = { ...defaults(), contextInjection: false };
+    await box.command();
+    assert.equal(await request(box), 0);
+    await prompt(box);
+    assert.equal(await request(box), 0);
+    assert.doesNotMatch(box.controls.status, /context/);
+  } finally { await box.cleanup(); }
+});
+
+test("a version 1 entry keeps its guardrail choices and takes context injection from the project", async () => {
+  for (const projectEnabled of [true, false]) {
+    const box = await sandbox();
+    try {
+      await withDocs(box, projectEnabled);
+      box.controls.branch = [{
+        type: "custom", customType: featureStateEntry, id: "old", parentId: null, timestamp: "",
+        data: { version: 1, cwd: box.project, features: { writeProtection: true, readProtection: false, riskyCommands: true, telemetry: true } }
+      }];
+      await box.emit("session_start", { reason: "resume" });
+      assert.equal(await box.call("read", { path: ".env" }), undefined, "the saved read-protection choice is kept");
+      assert.notEqual(await box.call("write", { path: ".env" }), undefined);
+      await prompt(box);
+      assert.equal(await request(box), projectEnabled ? 1 : 0);
+      assert.equal(box.controls.notifications.some((n) => /Invalid LAWb/.test(n.message)), false);
+    } finally { await box.cleanup(); }
+  }
+});
+
+test("context choices survive a real Pi SessionManager save/open and follow its active tree branch", async () => {
+  const box = await sandbox();
+  try {
+    await withDocs(box, false);
+    const native = SessionManager.create(box.project, join(box.root, "sessions"));
+    box.controls.nativeSession = native;
+    const before = native.appendMessage({ role: "user", content: "fixture task", timestamp: Date.now() });
+    box.controls.selection = { ...defaults(), contextInjection: true };
+    await box.command();
+    const file = native.getSessionFile();
+    assert.ok(file);
+    await box.emit("session_shutdown");
+    box.controls.nativeSession = SessionManager.open(file);
+    await box.emit("session_start", { reason: "resume" });
+    await prompt(box);
+    assert.equal(await request(box), 1);
+    box.controls.nativeSession.branch(before);
+    await box.emit("session_tree");
+    await prompt(box);
+    assert.equal(await request(box), 0);
+  } finally { await box.cleanup(); }
+});
+
+test("turning secret read protection off for the session does not widen what context injection may read", async () => {
+  const box = await sandbox();
+  try {
+    await withDocs(box, true);
+    await writeFile(join(box.project, "docs", ".env.md"), "# Env\n\nCANARY-ENV tokens authentication\n");
+    box.controls.selection = { ...defaults(), readProtection: false, contextInjection: true };
+    await box.command();
+    assert.equal(await box.call("read", { path: ".env" }), undefined, "the tool-call guard really is off");
+    let injected = "";
+    await prompt(box);
+    const result = await box.emit("context", { type: "context", messages: [{ role: "user", content: "q" }] }) as
+      { messages?: { customType?: string; content?: string }[] } | undefined;
+    injected = (result?.messages ?? []).find((message) => message.customType === "lawb-context")?.content ?? "";
+    assert.match(injected, /docs\/auth\.md/);
+    assert.equal(injected.includes("CANARY-ENV"), false);
   } finally { await box.cleanup(); }
 });

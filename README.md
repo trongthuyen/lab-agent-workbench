@@ -65,14 +65,16 @@ to share the config should skip it and ignore only `.lawb/runs/`.
 ### Interactive feature controls (v0.1.2)
 
 In Pi, run `/lawb` to toggle write/workspace protection, secret read protection, risky-command
-blocking, and redacted telemetry. Use Up/Down to select, Enter/Space to toggle, **Ctrl+S to apply**,
-and Esc to discard. Disabling guardrails requires confirmation and leaves a visible footer warning.
+blocking, redacted telemetry, and the experimental project context injection (off unless
+the project enables it). Use Up/Down to select, Enter/Space to toggle, **Ctrl+S to apply**,
+and Esc to discard. Disabling guardrails requires confirmation and leaves a visible footer warning; turning context
+injection on does not, but the notice says excerpts of matching project docs are sent to the model.
 
 Switches apply to **this Pi session's active branch**: they survive resume/reload and follow
 fork/tree navigation, but a new session starts from project defaults. They do not edit
 `.lawb/config.json` or affect other sessions or the standalone CLI. Re-enabling a guardrail restores
 its configured rules, not necessarily the built-in defaults. Quality gates remain an explicit
-`lawb gates` command; there is no fake switch for CLI commands or unimplemented Phase 2 features.
+`lawb gates` command; there is no fake switch for CLI commands or for Phase 2 features that do not exist yet.
 
 From a clone, build and install the local extension as described below, then restart Pi. The menu
 requires interactive TUI mode; policy and telemetry still work in print/JSON/RPC modes.

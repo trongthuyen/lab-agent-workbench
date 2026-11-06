@@ -23,6 +23,7 @@ Type `/lawb` in interactive Pi to open the feature menu:
 - Secret read protection
 - Risky command blocking
 - Redacted telemetry
+- Project context injection (experimental)
 
 Up/Down selects, Enter/Space toggles a draft, Ctrl+S applies, and Esc/Ctrl+C cancels.
 Turning off a guardrail requires confirmation. A footer warning remains while guardrails are off.
