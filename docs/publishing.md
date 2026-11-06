@@ -42,6 +42,22 @@ publishing from a clone without `dist/` can ship `lawb` without its command.
 concluding it failed. The registry may also show a `0.0.0-stage` placeholder version next to each release
 (from staged publishing); it is harmless and `latest` points at the real version.
 
+### Pre-releases (alpha)
+
+A version with a suffix such as `0.2.0-alpha.1` must be published with `--tag alpha`; without a tag npm moves
+`latest` to it and everyone running `pi update` or `npx @lab-agent-workbench/lawb` gets the experimental build.
+Ranges like `^0.1.3` never match a pre-release, so `latest` users are unaffected as long as the tag is right.
+
+```bash
+npm publish -w @lab-agent-workbench/core         --registry=$R --tag alpha
+npm publish -w @lab-agent-workbench/pi-extension --registry=$R --tag alpha
+npm publish -w @lab-agent-workbench/lawb         --registry=$R --tag alpha
+npm dist-tag ls @lab-agent-workbench/lawb        # latest unchanged, alpha -> the pre-release
+```
+
+Users opt in with `@alpha` (or the exact version). If `latest` moved by mistake, repair it with
+`npm dist-tag add @lab-agent-workbench/<package>@<previous> latest` for each package.
+
 ### Verify
 
 From an empty directory:

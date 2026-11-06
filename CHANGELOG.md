@@ -3,7 +3,14 @@
 Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workbench/pi-extension` and
 `@lab-agent-workbench/lawb` always share a version, because the other two pin `core` exactly.
 
-## Unreleased
+## 0.2.0-alpha.1 (2026-11-06)
+
+**Pre-release (npm tag `alpha`; `latest` stays 0.1.3).** Phase 2 context engineering, experimental and off by
+default: the benefit and the cost of these features are **unmeasured** (see
+[DOGFOOD-001](docs/experiments/DOGFOOD-001-context-cost.md), not yet run). Install with
+`pi install npm:@lab-agent-workbench/pi-extension@alpha` and `npx @lab-agent-workbench/lawb@alpha ...`. A project
+whose `.lawb/config.json` does not enable `context` behaves as on 0.1.3. Structured compaction (P2-05) is not part
+of this release.
 
 ### Added
 

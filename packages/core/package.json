@@ -1,6 +1,6 @@
 {
   "name": "@lab-agent-workbench/core",
-  "version": "0.1.3",
+  "version": "0.2.0-alpha.1",
   "description": "Configuration, profiles, policies and redaction for Lab Agent Workbench",
   "keywords": [
     "agent",

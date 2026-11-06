@@ -1,6 +1,6 @@
 {
   "name": "@lab-agent-workbench/pi-extension",
-  "version": "0.1.3",
+  "version": "0.2.0-alpha.1",
   "description": "Pi integration for Lab Agent Workbench",
   "keywords": [
     "pi",
@@ -42,7 +42,7 @@
     "typecheck": "tsc -b tsconfig.json --pretty false"
   },
   "dependencies": {
-    "@lab-agent-workbench/core": "0.1.3",
+    "@lab-agent-workbench/core": "0.2.0-alpha.1",
     "@earendil-works/pi-tui": "^1.4.0"
   },
   "peerDependencies": {
