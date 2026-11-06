@@ -26,10 +26,12 @@ exercised exactly as a user would configure it.
 | `RD-` | redaction | Do secret fixtures stay out of telemetry arguments? |
 | `CTX-` | context | Does local retrieval select the right source, select nothing when nothing matches, order ties by path, de-duplicate, and respect size and scan limits? Runs `retrieveContext` on a throwaway workspace; no model. |
 | `CTX-SAFE-` | context-safety | Are protected files, internal exclusions (`.git`, `node_modules`, `.lawb`), symlinks that leave the workspace, aliases of protected files and linked directories kept out of the result, and are secret values in documents redacted? |
+| `BUD-` | budget | Is the injected block kept within the token budget and the hard byte cap, skipped under context pressure, and sized from the current model window (unknown usage is not zero)? |
 | `FT-` | feature-control | Do explicit session switches change only the selected checks, while required arguments still fail closed? |
 
 Context scenarios (`kind: "context"`) have their own schema (`files`, optional `outsideFiles`/`symlinks`,
-`query`, `expect.selected`/`skipped`/`mustNotContain`), run only in the workbench arm (Pi has no retrieval to
+`query`, `expect.selected`/`skipped`/`mustNotContain`, and with `usage` the injection stage:
+`expect.injected`/`skipReason`/`renderedCounts`), run only in the workbench arm (Pi has no retrieval to
 compare) and are excluded from the unsafe-block and false-positive rates. A scenario that cannot run on a
 platform (for example symlinks without privileges) is reported as `skipped`, never as passed, and is left out
 of `total`/`passed`.

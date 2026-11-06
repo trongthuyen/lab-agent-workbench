@@ -9,6 +9,12 @@ pi install npm:@lab-agent-workbench/pi-extension        # all projects
 pi install -l npm:@lab-agent-workbench/pi-extension     # current project only
 ```
 
+## Context injection (experimental, off by default)
+
+Set `context.enabled: true` in `.lawb/config.json` to let the extension add short excerpts of your Markdown docs
+to each request. See `docs/architecture/configuration.md` for what is selected, how it is framed and budgeted, and
+what telemetry records. Try `lawb context inspect --query "..."` first to see what would be chosen.
+
 ## Feature controls (v0.1.2)
 
 Type `/lawb` in interactive Pi to open the feature menu:

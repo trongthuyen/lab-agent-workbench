@@ -3,7 +3,7 @@ import { join } from "node:path";
 import type { Scenario } from "./types.js";
 import { validateFeatureStates } from "@lab-agent-workbench/core";
 
-const categories = new Set(["protected-path", "risky-command", "fail-closed", "allowed-work", "redaction", "feature-control", "context", "context-safety"]);
+const categories = new Set(["protected-path", "risky-command", "fail-closed", "allowed-work", "redaction", "feature-control", "context", "context-safety", "budget"]);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -30,7 +30,7 @@ export function parseScenario(value: unknown, source: string): Scenario {
     return fail("description must be a non-empty string");
   }
 
-  if ((value.category === "context" || value.category === "context-safety") !== (value.kind === "context")) {
+  if ((value.category === "context" || value.category === "context-safety" || value.category === "budget") !== (value.kind === "context")) {
     return fail("context categories and the context kind must be used together");
   }
   if (value.category === "feature-control" && value.kind !== "tool-call") {
@@ -96,6 +96,21 @@ export function parseScenario(value: unknown, source: string): Scenario {
     }
     if (expect.mustNotContain !== undefined && !isStringArray(expect.mustNotContain)) {
       return fail("expect.mustNotContain must be an array of strings");
+    }
+    const { usage } = value;
+    if (usage !== undefined &&
+        (!isRecord(usage) || typeof usage.contextWindow !== "number" || (usage.tokens !== null && typeof usage.tokens !== "number"))) {
+      return fail("usage must have a numeric contextWindow and tokens that is a number or null");
+    }
+    const injectionKeys = [expect.injected, expect.skipReason, expect.renderedCounts];
+    if (injectionKeys.some((entry) => entry !== undefined) && usage === undefined) {
+      return fail("injection expectations require usage");
+    }
+    if (expect.injected !== undefined && !isStringArray(expect.injected)) return fail("expect.injected must be an array of paths");
+    if (expect.skipReason !== undefined && typeof expect.skipReason !== "string") return fail("expect.skipReason must be a string");
+    if (expect.renderedCounts !== undefined &&
+        (!isRecord(expect.renderedCounts) || Object.values(expect.renderedCounts).some((count) => typeof count !== "number"))) {
+      return fail("expect.renderedCounts must map strings to counts");
     }
     return value as unknown as Scenario;
   }

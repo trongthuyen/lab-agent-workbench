@@ -6,7 +6,7 @@ interface ScenarioBase {
   id: string;
   category:
     | "protected-path" | "risky-command" | "fail-closed" | "allowed-work" | "redaction" | "feature-control"
-    | "context" | "context-safety";
+    | "context" | "context-safety" | "budget";
   description: string;
 }
 
@@ -43,6 +43,8 @@ export interface ContextScenario extends ScenarioBase {
   /** Layered over the project config (typically `context` limits and `policies`). */
   config?: ConfigLayer;
   query: string;
+  /** Pi's reported context usage; selects the injection stage (budget, packing, frame). `tokens: null` is unknown. */
+  usage?: { tokens: number | null; contextWindow: number };
   expect: {
     /** Paths of the selected chunks, in rank order. */
     selected: string[];
@@ -50,6 +52,12 @@ export interface ContextScenario extends ScenarioBase {
     skipped?: Record<string, string>;
     /** Strings that must appear nowhere in the selected text or the serialized retrieval result. */
     mustNotContain?: string[];
+    /** Injection stage (needs `usage`): paths of the chunks that fit the budget, in order. */
+    injected?: string[];
+    /** Injection stage: the reason injection was skipped entirely. */
+    skipReason?: string;
+    /** Injection stage: exact occurrence counts of substrings in the rendered block. */
+    renderedCounts?: Record<string, number>;
   };
 }
 

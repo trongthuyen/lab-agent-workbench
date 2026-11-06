@@ -1,0 +1,29 @@
+{
+  "id": "BUD-002",
+  "category": "budget",
+  "description": "A nearly full context window skips injection entirely",
+  "kind": "context",
+  "files": {
+    "docs/a.md": "# Widget\n\nwidget docs\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "widget",
+  "usage": {
+    "tokens": 99500,
+    "contextWindow": 100000
+  },
+  "expect": {
+    "selected": [
+      "docs/a.md"
+    ],
+    "injected": [],
+    "skipReason": "context-pressure"
+  }
+}

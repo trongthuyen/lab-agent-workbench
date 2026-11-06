@@ -1,0 +1,34 @@
+{
+  "id": "BUD-004",
+  "category": "budget",
+  "description": "A smaller model window shrinks the budget below what a large window allows",
+  "kind": "context",
+  "files": {
+    "docs/a.md": "# Widget a\n\nwidget word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \n",
+    "docs/b.md": "# Widget b\n\nwidget word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ],
+      "maxChunkTokens": 100,
+      "maxInjectedTokens": 4000
+    }
+  },
+  "query": "widget",
+  "usage": {
+    "tokens": null,
+    "contextWindow": 2000
+  },
+  "expect": {
+    "selected": [
+      "docs/a.md",
+      "docs/b.md"
+    ],
+    "injected": [
+      "docs/a.md"
+    ]
+  }
+}
