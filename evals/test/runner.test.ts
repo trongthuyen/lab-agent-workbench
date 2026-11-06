@@ -201,3 +201,31 @@ test("rejects malformed context scenarios", () => {
     assert.throws(() => parseScenario(value, "x"), message);
   }
 });
+
+test("budget scenarios fail when the budget is not enforced", async () => {
+  const scenarios = await loadScenarios(join(root, "scenarios"));
+  const bud = scenarios.find((scenario) => scenario.id === "BUD-001");
+  assert.ok(bud && bud.kind === "context");
+  const loosened = { ...bud, config: { context: { ...bud.config?.context, maxInjectedTokens: 4000 } } };
+  const report = await runEvaluation({ scenarios: [loosened], config: await fixtureConfig(), cwd: fixtureDirectory, repositoryCommit: "test" });
+  assert.equal(report.results.find((item) => item.id === "BUD-001")?.passed, false);
+  assert.equal(report.results.find((item) => item.id === "BUD-001")?.detail.includes("expected 1"), true);
+});
+
+test("rejects malformed injection expectations", () => {
+  const valid = {
+    id: "BUD-X", category: "budget", description: "d", kind: "context",
+    files: { "a.md": "x" }, query: "q", usage: { tokens: null, contextWindow: 1000 }, expect: { selected: [], injected: [] }
+  };
+  assert.doesNotThrow(() => parseScenario(valid, "x"));
+  const cases: [Record<string, unknown>, RegExp][] = [
+    [{ ...valid, usage: undefined }, /require usage/],
+    [{ ...valid, usage: { tokens: "x", contextWindow: 10 } }, /usage must have/],
+    [{ ...valid, usage: { tokens: 1 } }, /usage must have/],
+    [{ ...valid, expect: { selected: [], injected: "a" } }, /expect\.injected/],
+    [{ ...valid, expect: { selected: [], renderedCounts: { a: "1" } } }, /renderedCounts/]
+  ];
+  for (const [value, message] of cases) {
+    assert.throws(() => parseScenario(value, "x"), message);
+  }
+});

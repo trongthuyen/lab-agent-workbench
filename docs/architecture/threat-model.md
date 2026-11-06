@@ -57,7 +57,10 @@ Status: v0.1 draft
   that `context.sources` cannot override, no walking through symlinked directories, bounded reads that skip rather
   than truncate, and redaction of retrieved text. These are guardrails, not a sandbox: a file replaced between the
   check and the read (TOCTOU) is not defended against, redaction misses unknown secret formats, and retrieved
-  documents are untrusted data that may contain instructions. Nothing is injected into a model request yet.
+  documents are untrusted data that may contain instructions. When `context.enabled` is on, selected excerpts are added to model requests as a transient, labelled
+  "untrusted" message. A document can still contain instructions that a model follows; the frame lowers that risk
+  and cannot remove it, and policy enforcement stays outside the model. The extra tokens cost money and time, and
+  changing excerpts can reduce provider cache hits; none of this has been measured.
 - Individual tool calls do not prompt for conditional approval; they are allowed or blocked.
 - The v0.1.2 `/lawb` TUI lets an idle user disable guardrails for a Pi session branch after
   confirmation. That intentionally removes the corresponding checks; a visible footer warning is

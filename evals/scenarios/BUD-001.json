@@ -1,0 +1,34 @@
+{
+  "id": "BUD-001",
+  "category": "budget",
+  "description": "Chunks that do not fit the token budget are dropped after the first that fits",
+  "kind": "context",
+  "files": {
+    "docs/a.md": "# Widget a\n\nwidget word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \n",
+    "docs/b.md": "# Widget b\n\nwidget word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word word \n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ],
+      "maxChunkTokens": 100,
+      "maxInjectedTokens": 200
+    }
+  },
+  "query": "widget",
+  "usage": {
+    "tokens": 1000,
+    "contextWindow": 1000000
+  },
+  "expect": {
+    "selected": [
+      "docs/a.md",
+      "docs/b.md"
+    ],
+    "injected": [
+      "docs/a.md"
+    ]
+  }
+}

@@ -2,12 +2,14 @@ import { appendFile, mkdir } from "node:fs/promises";
 import { homedir } from "node:os";
 import { dirname, isAbsolute, join, relative, resolve, sep } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
+import { registerContextInjection, type ContextTelemetryRecord } from "./context.js";
 import { registerFeatureControls } from "./feature-controls.js";
 import {
   evaluateToolCall,
   loadProjectConfig,
   redact,
-  type LoadedConfig
+  type LoadedConfig,
+  type WorkbenchConfig
 } from "@lab-agent-workbench/core";
 
 interface PendingCall {
@@ -60,11 +62,28 @@ export function createLabAgentWorkbench(options: ExtensionOptions = {}): (pi: Ex
       return loaded;
     };
 
+    let clearContext = () => {};
     const configFor = registerFeatureControls(
       pi,
       async (cwd) => (await loadedConfigFor(cwd)).config,
-      () => { configs.clear(); pending.clear(); }
+      () => { configs.clear(); pending.clear(); clearContext(); }
     );
+
+    const appendTelemetry = async (cwd: string, config: WorkbenchConfig, record: object): Promise<void> => {
+      const { defaulted } = await loadedConfigFor(cwd);
+      const outputPath = defaulted
+        ? defaultTelemetryPath(home)
+        : resolveTelemetryPath(cwd, config.telemetry.path);
+      await mkdir(dirname(outputPath), { recursive: true });
+      await appendFile(outputPath, `${JSON.stringify(record)}\n`, "utf8");
+    };
+    clearContext = registerContextInjection(
+      pi,
+      configFor,
+      async (cwd, config, record: ContextTelemetryRecord) => {
+        if (config.telemetry.enabled) await appendTelemetry(cwd, config, record);
+      }
+    ).clear;
 
     pi.on("tool_call", async (event, ctx) => {
       const config = await configFor(ctx.cwd);
@@ -92,7 +111,6 @@ export function createLabAgentWorkbench(options: ExtensionOptions = {}): (pi: Ex
 
     pi.on("tool_execution_end", async (event, ctx) => {
       const config = await configFor(ctx.cwd);
-      const { defaulted } = await loadedConfigFor(ctx.cwd);
       if (!config.telemetry.enabled) {
         pending.delete(event.toolCallId);
         return;
@@ -100,9 +118,6 @@ export function createLabAgentWorkbench(options: ExtensionOptions = {}): (pi: Ex
 
       const call = pending.get(event.toolCallId);
       pending.delete(event.toolCallId);
-      const outputPath = defaulted
-        ? defaultTelemetryPath(home)
-        : resolveTelemetryPath(ctx.cwd, config.telemetry.path);
       const record = {
         schemaVersion: 1,
         cwd: ctx.cwd,
@@ -116,8 +131,7 @@ export function createLabAgentWorkbench(options: ExtensionOptions = {}): (pi: Ex
         isError: event.isError
       };
 
-      await mkdir(dirname(outputPath), { recursive: true });
-      await appendFile(outputPath, `${JSON.stringify(record)}\n`, "utf8");
+      await appendTelemetry(ctx.cwd, config, record);
     });
   };
 }

@@ -24,6 +24,14 @@ Versions are released together: `@lab-agent-workbench/core`, `@lab-agent-workben
 - `CTX-` and `CTX-SAFE-` evaluation scenarios (13) with their own schema; scenarios that cannot run on a
   platform are reported as skipped instead of passed. `runEvaluation` is now async.
 
+- Dynamic context injection in the Pi extension (opt-in via `context.enabled`, off by default): excerpts are
+  retrieved once per prompt and added as one transient, untrusted-framed message per request, replaced rather than
+  appended, re-validated against the files before each request, and sized by a token/byte budget that shrinks with
+  Pi's reported context usage and model window (unknown usage is not treated as zero). Files Pi already loaded are
+  skipped.
+- `type: "context"` telemetry records with counters only, and a one-time notice at 80% context usage.
+- `BUD-` scenarios and an injection stage for context scenarios.
+
 ### Changed
 
 - `lawb init` and the sample fixture config now include the `context` block.

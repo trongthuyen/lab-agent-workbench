@@ -1,0 +1,30 @@
+{
+  "id": "BUD-003",
+  "category": "budget",
+  "description": "Unknown usage (null) is not treated as an empty window",
+  "kind": "context",
+  "files": {
+    "docs/a.md": "# Widget\n\nwidget docs\n",
+    "docs/other.md": "# Other\n\nunrelated\n"
+  },
+  "config": {
+    "context": {
+      "sources": [
+        "**/*.md"
+      ]
+    }
+  },
+  "query": "widget",
+  "usage": {
+    "tokens": null,
+    "contextWindow": 8000
+  },
+  "expect": {
+    "selected": [
+      "docs/a.md"
+    ],
+    "injected": [
+      "docs/a.md"
+    ]
+  }
+}

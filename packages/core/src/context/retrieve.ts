@@ -172,13 +172,15 @@ export interface RetrieveOptions {
   query: string;
   config: WorkbenchConfig;
   signal?: AbortSignal | undefined;
+  /** Lowercase workspace-relative paths that must not be retrieved (already in the prompt). */
+  exclude?: ReadonlySet<string> | undefined;
 }
 
 /** discover → permission checks → bounded reads → chunk → lexical rank → dedupe. Deterministic; no model calls. */
 export async function retrieveContext(options: RetrieveOptions): Promise<RetrievalResult> {
   const { config, signal } = options;
   const terms = queryTerms(options.query);
-  const scan = await discoverSources({ root: options.root, config, signal });
+  const scan = await discoverSources({ root: options.root, config, signal, exclude: options.exclude });
   const result: RetrievalResult = {
     queryTerms: terms.length,
     selected: [],

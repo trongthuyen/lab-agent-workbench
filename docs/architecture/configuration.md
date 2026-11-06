@@ -58,9 +58,33 @@ last only until exit.
 ## Context group (Phase 2 contract)
 
 `context` is additive in schema v1; files without it resolve to the defaults below, and `lawb init` now writes it.
-Only `lawb context inspect` and the `retrieveContext` library function read it so far (they work even when
-`enabled` is false, as a dry run). Injection and structured compaction arrive in later Phase 2 changes and stay
-experimental and opt-in.
+`lawb context inspect` and the `retrieveContext` library function work even when `enabled` is false (a dry run).
+When `enabled` is true, the Pi extension injects retrieved excerpts (below). Structured compaction arrives in a later
+Phase 2 change. Everything stays experimental and opt-in; the session switch in `/lawb` comes with P2-04, so for now
+only the project file turns it on.
+
+### Injection (Pi extension)
+
+- **When:** once per user prompt (`before_agent_start`): the prompt's first 4000 characters are the query, files Pi
+  already loaded into the system prompt (AGENTS.md and friends) are skipped, and the result is packed to the budget.
+- **How:** a single `lawb-context` message is added to each LLM request of that turn, directly before the latest user
+  message (`context` hook). It is never written to the session, so it cannot pile up across turns; the next prompt
+  starts clean, and only a message of that type is ever replaced or removed. The text is stable (no timestamps) so
+  repeated calls in a turn are byte-identical.
+- **Framing:** excerpts are labelled untrusted reference data with `path:start-end` citations; closing tags inside
+  the text are neutralized so a document cannot end its own frame. This reduces, and does not eliminate, prompt-injection
+  risk.
+- **Freshness:** before each request the selected files are read again through the same permission checks; edited,
+  deleted or newly protected sources are dropped, not injected stale.
+- **Budget:** at most `maxInjectedTokens` estimated tokens and `maxInjectedBytes` UTF-8 bytes, frame included. With
+  Pi's usage known, the budget is also capped at 20% of the remaining window; unknown usage (`null`, e.g. right after
+  compaction) is capped at 10% of the whole window, never treated as zero; below 200 tokens nothing is injected. It is
+  recomputed for each prompt, so switching to a smaller-window model shrinks it. A one-time notice appears at 80% full.
+  These shares are unmeasured starting values.
+- **Failure:** a retrieval error injects nothing, shows one notice per session and is logged as `retrieval-failed`.
+- **Telemetry:** one `type: "context"` record per prompt with counters only (outcome, reason, query-term count, files
+  and bytes read, selected/injected chunk counts, estimated tokens, bytes, budget, Pi's reported usage or `null`,
+  retrieval milliseconds). It never contains the query, paths, snippets or tool results.
 
 Retrieval is deterministic and lexical (no embeddings or model calls): files matching `sources` are read within the
 limits, split by Markdown heading and size, and ranked by term frequency weighted by rarity, with extra weight for

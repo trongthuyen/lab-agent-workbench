@@ -6,6 +6,9 @@ import {
   redact,
   resolveConfig,
   resolveFeatureConfig,
+  injectionBudget,
+  packContext,
+  renderContext,
   retrieveContext,
   type WorkbenchConfig
 } from "@lab-agent-workbench/core";
@@ -122,7 +125,26 @@ async function runWorkbenchContext(scenario: ContextScenario, config: WorkbenchC
     for (const [path, reason] of Object.entries(scenario.expect.skipped ?? {})) {
       if (skipped.get(path) !== reason) problems.push(`a source was not skipped as ${reason}`);
     }
-    const output = JSON.stringify(result);
+    let output = JSON.stringify(result);
+    if (scenario.usage) {
+      const budget = injectionBudget(effective, scenario.usage);
+      const packed = budget.skipReason
+        ? { chunks: [], text: "" }
+        : packContext(result.selected, budget.tokens, effective.context.maxInjectedBytes);
+      const injected = packed.chunks.map((chunk) => chunk.path);
+      output += packed.text;
+      if (scenario.expect.injected && JSON.stringify(injected) !== JSON.stringify(scenario.expect.injected)) {
+        problems.push(`injected ${injected.length} chunk(s), expected ${scenario.expect.injected.length} with the expected sources`);
+      }
+      if ((scenario.expect.skipReason ?? undefined) !== (budget.skipReason ?? undefined) &&
+          (scenario.expect.skipReason !== undefined || budget.skipReason !== undefined)) {
+        problems.push(`injection skip reason was ${budget.skipReason ?? "none"}, expected ${scenario.expect.skipReason ?? "none"}`);
+      }
+      const rendered = packed.text === "" ? "" : renderContext(packed.chunks);
+      for (const [text, count] of Object.entries(scenario.expect.renderedCounts ?? {})) {
+        if (rendered.split(text).length - 1 !== count) problems.push("a rendered substring count did not match");
+      }
+    }
     const leaked = (scenario.expect.mustNotContain ?? []).filter((text) => output.includes(text)).length;
     if (leaked > 0) problems.push(`${leaked} canary string(s) reached the retrieval result`);
     return {

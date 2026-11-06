@@ -3,7 +3,7 @@ import { lstat, open, readdir, realpath, stat } from "node:fs/promises";
 import { isAbsolute, join, relative, sep } from "node:path";
 import { evaluateReadPath, matchesGlob } from "../policy.js";
 import type { WorkbenchConfig } from "../types.js";
-import type { SkippedSource, SkipReason, SourceScan } from "./types.js";
+import type { SkippedSource, SkipReason, SourceFile, SourceScan } from "./types.js";
 
 /**
  * This reader opens files itself, so nothing the tool_call policy checks applies to it. Every guard is
@@ -65,10 +65,75 @@ function decode(buffer: Buffer): string | undefined {
   }
 }
 
+export type LoadedSource = { file: SourceFile } | { skipped: SkippedSource };
+
+export interface LoadSourceOptions {
+  /** Canonical workspace root. */
+  rootReal: string;
+  absolute: string;
+  /** Lexical workspace-relative path with forward slashes. */
+  rel: string;
+  sourceIndex: number;
+  config: WorkbenchConfig;
+  signal?: AbortSignal | undefined;
+  /** Called with the file size before it is read; false stops the read and reports `scan-limit`. */
+  admit?: ((size: number) => boolean) | undefined;
+}
+
+/**
+ * Every check a source must pass before its content is used: canonical confinement, protected read
+ * paths on the lexical and the real path, internal exclusions, size and encoding. Retrieval and the
+ * later freshness re-check both go through here. Returns undefined for anything that is not a file.
+ */
+export async function loadSourceFile(options: LoadSourceOptions): Promise<LoadedSource | undefined> {
+  const { rootReal, absolute, rel, config, signal } = options;
+  const skip = (reason: SkipReason): LoadedSource => ({ skipped: { path: rel, reason } });
+  signal?.throwIfAborted();
+  let canonical: string;
+  try {
+    canonical = await realpath(absolute);
+  } catch {
+    return skip("unreadable");
+  }
+  const canonicalRel = relative(rootReal, canonical);
+  if (isOutside(canonicalRel)) return skip("outside-workspace");
+  const canonicalPosix = toPosix(canonicalRel);
+  // The lexical name and the real target must both be permitted: an alias must not reach a protected file.
+  for (const candidate of canonicalPosix === rel ? [rel] : [rel, canonicalPosix]) {
+    if (isInternallyExcluded(candidate) || !evaluateReadPath(candidate, rootReal, config).allowed) {
+      return skip("protected");
+    }
+  }
+
+  let size: number;
+  try {
+    const info = await stat(canonical);
+    if (!info.isFile()) return undefined;
+    size = info.size;
+  } catch {
+    return skip("unreadable");
+  }
+  if (size > config.context.maxFileBytes) return skip("too-large");
+  if (options.admit && !options.admit(size)) return skip("scan-limit");
+
+  let buffer: Buffer | undefined;
+  try {
+    buffer = await readBounded(canonical, config.context.maxFileBytes);
+  } catch {
+    return skip("unreadable");
+  }
+  if (!buffer) return skip("too-large");
+  const text = decode(buffer);
+  if (text === undefined) return skip("binary");
+  return { file: { path: rel, text, bytes: buffer.length, sourceIndex: options.sourceIndex } };
+}
+
 export interface DiscoverOptions {
   root: string;
   config: WorkbenchConfig;
   signal?: AbortSignal | undefined;
+  /** Lowercase workspace-relative paths to leave out silently, e.g. files Pi already put in the prompt. */
+  exclude?: ReadonlySet<string> | undefined;
 }
 
 /** Walks the workspace in a deterministic order and returns the readable, permitted source files. */
@@ -88,50 +153,25 @@ export async function discoverSources(options: DiscoverOptions): Promise<SourceS
     stopped = true;
   };
 
-  /** All checks that apply to a candidate whose lexical path matched `context.sources`. */
   const readCandidate = async (absolute: string, rel: string, sourceIndex: number): Promise<void> => {
-    signal?.throwIfAborted();
-    let canonical: string;
-    try {
-      canonical = await realpath(absolute);
-    } catch {
-      return skip(rel, "unreadable");
+    if (options.exclude?.has(rel.toLowerCase())) return;
+    const loaded = await loadSourceFile({
+      rootReal,
+      absolute,
+      rel,
+      sourceIndex,
+      config,
+      signal,
+      admit: (size) => scan.files.length < limits.maxFilesScanned && scan.bytesRead + size <= limits.maxBytesScanned
+    });
+    if (!loaded) return;
+    if ("skipped" in loaded) {
+      scan.skipped.push(loaded.skipped);
+      if (loaded.skipped.reason === "scan-limit") stop();
+      return;
     }
-    const canonicalRel = relative(rootReal, canonical);
-    if (isOutside(canonicalRel)) return skip(rel, "outside-workspace");
-    const canonicalPosix = toPosix(canonicalRel);
-    // The lexical name and the real target must both be permitted: an alias must not reach a protected file.
-    for (const candidate of canonicalPosix === rel ? [rel] : [rel, canonicalPosix]) {
-      if (isInternallyExcluded(candidate) || !evaluateReadPath(candidate, rootReal, config).allowed) {
-        return skip(rel, "protected");
-      }
-    }
-
-    let size: number;
-    try {
-      const info = await stat(canonical);
-      if (!info.isFile()) return;
-      size = info.size;
-    } catch {
-      return skip(rel, "unreadable");
-    }
-    if (size > limits.maxFileBytes) return skip(rel, "too-large");
-    if (scan.files.length >= limits.maxFilesScanned || scan.bytesRead + size > limits.maxBytesScanned) {
-      skip(rel, "scan-limit");
-      return stop();
-    }
-
-    let buffer: Buffer | undefined;
-    try {
-      buffer = await readBounded(canonical, limits.maxFileBytes);
-    } catch {
-      return skip(rel, "unreadable");
-    }
-    if (!buffer) return skip(rel, "too-large");
-    const text = decode(buffer);
-    if (text === undefined) return skip(rel, "binary");
-    scan.bytesRead += buffer.length;
-    scan.files.push({ path: rel, text, bytes: buffer.length, sourceIndex });
+    scan.bytesRead += loaded.file.bytes;
+    scan.files.push(loaded.file);
   };
 
   const walk = async (directory: string, prefix: string): Promise<void> => {
